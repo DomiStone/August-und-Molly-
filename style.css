@@ -8,3 +8,11 @@
 @media(max-width:700px){.games-drawer{bottom:73px;right:0;gap:10px}.mini-top{top:84px;gap:10px}.mini-stars{font-size:29px;padding:7px 15px;gap:10px}.mini-controls{bottom:40px}.jump-now{width:83px;height:83px;font-size:46px}#dance-controls .round{width:67px;height:67px;font-size:32px}#dance-controls{gap:10px}#dance-cue{font-size:43px;top:30%}#hurdle{width:21%}.in-minigame #reaction{top:24%}}
 @media(max-height:500px){.games-drawer{bottom:67px}.mini-top{top:12px}.mini-stars{font-size:26px}.mini-controls{bottom:15px}.jump-now{width:62px;height:62px;font-size:34px}#dance-controls .round{width:55px;height:55px;font-size:28px}#dance-controls{padding:7px}#dance-cue{top:24%;font-size:32px;padding:6px 14px}.in-minigame #reaction{top:24%}}
 .dance-body{width:76%;margin:0 auto;aspect-ratio:1}
+
+.food-piece{position:absolute;z-index:7;font-size:42px;line-height:1;transform:translate(-50%,-25%) scale(calc(1 - var(--bite,0)*.14));transform-origin:50% 70%;filter:drop-shadow(0 4px 3px #49301f38);transition:transform .32s ease,opacity .32s ease;pointer-events:none}
+.food-piece.bite{animation:food-bite .28s ease}
+.food-piece[style*="--bite: 5"]{opacity:0}
+.food-crumb{position:absolute;z-index:8;color:#8b6d35;font-size:24px;font-weight:900;pointer-events:none;animation:crumb-drop .65s ease-out forwards}
+@keyframes food-bite{50%{transform:translate(-50%,-25%) scale(calc(1 - var(--bite,0)*.14)) rotate(-8deg)}}
+@keyframes crumb-drop{0%{opacity:1;transform:translate(-50%,-8px) scale(1)}100%{opacity:0;transform:translate(-50%,18px) scale(.35)}}
+@media(max-width:700px){.food-piece{font-size:34px}}
