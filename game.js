@@ -1,34 +1,261 @@
-'use strict';
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const pets={august:{name:'August',food:70,water:75,joy:80},molly:{name:'Molly',food:72,water:75,joy:80}};
-let selected=['august','molly'],paused=false,sound=false,searchActive=false,water=60,busy=false,found=0,reactionTimer,audioContext;
-function update(){for(const [id,p]of Object.entries(pets))for(const key of ['food','water','joy'])$(`[data-need="${id}-${key}"]`).style.setProperty('--level',Math.round(p[key])+'%');$('#water-fill').style.width=water+'%';}
-function message(text){$('#message').textContent=text;}
-function react(icon){clearTimeout(reactionTimer);$('#reaction').textContent=icon;$('#reaction').classList.add('visible');reactionTimer=setTimeout(()=>$('#reaction').classList.remove('visible'),2200);}
-function tone(kind='happy'){if(!sound)return;try{audioContext ||= new(window.AudioContext||window.webkitAudioContext)();audioContext.resume();const time=audioContext.currentTime;[0,.13,.26].forEach((d,i)=>{const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=kind==='water'?510-i*80:700+i*140;g.gain.setValueAtTime(0,time+d);g.gain.linearRampToValueAtTime(.045,time+d+.02);g.gain.exponentialRampToValueAtTime(.001,time+d+.17);o.connect(g);g.connect(audioContext.destination);o.start(time+d);o.stop(time+d+.18);});}catch{}}
-function effect(id,icon){const w=walkers[id];const e=document.createElement('span');e.className='effect';e.textContent=icon;e.style.left=w.x+'%';e.style.top=w.y-12+'%';$('#effects').append(e);setTimeout(()=>e.remove(),1800);}
-function select(ids){if(paused)return;selected=ids;for(const id of Object.keys(pets)){$('#'+id).classList.toggle('selected',ids.includes(id));$('#select-'+id).classList.toggle('selected',ids.includes(id));$('#select-'+id).setAttribute('aria-pressed',ids.includes(id));}$('#both').setAttribute('aria-pressed',ids.length===2);tone();}
-for(const id of Object.keys(pets)){for(const button of [$('#'+id),$('#select-'+id)])button.addEventListener('click',()=>select([id]));}
-$('#both').addEventListener('click',()=>select(['august','molly']));
-function closeFood(){$('#food-drawer').hidden=true;$('#food-menu').setAttribute('aria-expanded',false);}
-$('#food-menu').addEventListener('click',()=>{if(paused)return;const open=$('#food-drawer').hidden;$('#food-drawer').hidden=!open;$('#food-menu').setAttribute('aria-expanded',open);});
-function placeFood(id,type,x,y){
- const item=document.createElement('span');item.className='food-object food-'+type;item.dataset.pet=id;item.dataset.food=type;item.style.left=x+'%';item.style.top=y+'%';item.style.setProperty('--eaten','0%');item.setAttribute('aria-hidden','true');
- const edible=document.createElement('span');edible.className='food-edible';item.append(edible);
- if(type==='Karotte'){const leaves=document.createElement('span');leaves.className='carrot-leaves';item.append(leaves);}
- $('#effects').append(item);return item;
+"use strict";
+const $ = (s) => document.querySelector(s),
+  $$ = (s) => [...document.querySelectorAll(s)];
+const pets = {
+  august: { name: "August", food: 70, water: 75, joy: 80 },
+  molly: { name: "Molly", food: 72, water: 75, joy: 80 },
+};
+let selected = ["august", "molly"],
+  paused = false,
+  sound = false,
+  searchActive = false,
+  water = 60,
+  found = 0,
+  reactionTime = 0,
+  needsTime = 0,
+  searchResultTime = 0,
+  audioContext;
+const effects = new Map();
+function update() {
+  for (const [id, p] of Object.entries(pets))
+    for (const key of ["food", "water", "joy"])
+      $(`[data-need="${id}-${key}"]`).style.setProperty(
+        "--level",
+        Math.round(p[key]) + "%",
+      );
+  $("#water-fill").style.width = water + "%";
 }
-function eatFood(id,item,icon,value){
- const w=walkers[id];doBehavior(id,'eating',3.2);pets[id].food=Math.min(100,pets[id].food+value);pets[id].joy=Math.min(100,pets[id].joy+5);tone();update();
- let bite=0;const bites=6,timer=setInterval(()=>{if(paused)return;bite++;item.style.setProperty('--eaten',(bite/bites*100)+'%');item.classList.remove('bite');void item.offsetWidth;item.classList.add('bite');if(bite<bites){for(let c=0;c<2;c++){const crumb=document.createElement('span');crumb.className='food-crumb';crumb.textContent='•';crumb.style.left=(w.x+(Math.random()-.5)*3)+'%';crumb.style.top=(w.y-1+Math.random()*2)+'%';$('#effects').append(crumb);setTimeout(()=>crumb.remove(),700);}}else{clearInterval(timer);item.remove();effect(id,'✨');message(pets[id].name+' hat das Futter ganz aufgegessen.');}},480);
+function message(text) {
+  $("#message").textContent = text;
 }
-$$('[data-food]').forEach(b=>b.addEventListener('click',()=>{if(paused||busy)return;if(typeof endMiniGame==='function')endMiniGame();busy=true;setTimeout(()=>busy=false,600);closeFood();stopSearch();const ids=[...selected];ids.forEach((id,i)=>{const x=43+i*22,y=65,item=placeFood(id,b.dataset.food,x,y);sendPet(id,x,y,()=>eatFood(id,item,b.dataset.icon,Number(b.dataset.value)));});react(b.dataset.icon);message(ids.map(id=>pets[id].name).join(' und ')+' laufen zum Futter.');}));
-$('#refill').addEventListener('click',()=>{if(paused)return;water=100;Object.values(pets).forEach(p=>p.water=100);react('💧💙');tone('water');update();for(const id of Object.keys(pets))effect(id,'💧');});
-function perform(mode,icon,duration){if(paused)return;if(typeof endMiniGame==='function')endMiniGame();closeFood();stopSearch();for(const id of selected){if(mode==='house')goHome(id);else{doBehavior(id,mode,duration);pets[id].joy=Math.min(100,pets[id].joy+10);effect(id,icon);}}react(icon);tone();update();}
-$('#home').addEventListener('click',()=>perform('house','🏠',0));$('#scratch').addEventListener('click',()=>perform('scratching','🐾',3.8));$('#cuddle').addEventListener('click',()=>perform('cuddling','💕',3));$('#popcorn').addEventListener('click',()=>perform('hopping','✨',2.2));
-function stopSearch(){searchActive=false;$('#search-items').replaceChildren();$('#search-progress').hidden=true;$('#search').setAttribute('aria-pressed',false);}
-$('#search').addEventListener('click',()=>{if(paused)return;if(typeof endMiniGame==='function')endMiniGame();$('#games-drawer').hidden=true;$('#games').setAttribute('aria-expanded',false);if(searchActive){stopSearch();return;}closeFood();searchActive=true;found=0;$('#search').setAttribute('aria-pressed',true);$('#search-progress').hidden=false;$$('#search-progress span').forEach(s=>s.classList.remove('found'));const targets=[...selected];[[24,51,'🥬'],[76,57,'🥒'],[49,77,'🫑']].forEach(([x,y,icon],i)=>{const b=document.createElement('button');b.className='search-item';b.style.left=x+'%';b.style.top=y+'%';b.textContent=icon;b.setAttribute('aria-label','Leckerei finden');b.addEventListener('click',()=>{if(paused)return;b.remove();found++;$$('#search-progress span')[i].classList.add('found');targets.forEach((id,j)=>sendPet(id,x+j*15,y,()=>{doBehavior(id,found===3?'dancing':'eating',found===3?4:2);effect(id,icon);}));tone();if(found===3){react('🌟🌟🌟');searchActive=false;$('#search').setAttribute('aria-pressed',false);for(const id of targets)pets[id].joy=100;update();setTimeout(()=>{if(!searchActive)$('#search-progress').hidden=true;},2500);}});$('#search-items').append(b);});react('🔎🥬');});
-function setPause(value){paused=value;document.body.classList.toggle('paused',value);$('#pause-overlay').hidden=!value;$('#pause').setAttribute('aria-pressed',value);$$('nav button,.top-tools button,.pig,.search-item').forEach(b=>b.disabled=value);if(value)$('#resume').focus();else $('#pause').focus();}
-$('#pause').addEventListener('click',()=>setPause(true));$('#resume').addEventListener('click',()=>setPause(false));$('#sound').addEventListener('click',()=>{sound=!sound;$('#sound').textContent=sound?'🔊':'🔇';$('#sound').setAttribute('aria-pressed',sound);$('#sound').setAttribute('aria-label',sound?'Ton ausschalten':'Ton einschalten');tone();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeFood();if(paused)setPause(false);}});
-setInterval(()=>{if(paused||document.hidden)return;for(const p of Object.values(pets)){p.food=Math.max(35,p.food-.5);p.water=Math.max(35,p.water-.4);p.joy=Math.max(40,p.joy-.4);}water=Math.max(10,water-.5);update();},15000);update();
+function react(icon) {
+  $("#reaction").textContent = icon;
+  $("#reaction").classList.add("visible");
+  reactionTime = 2.2;
+}
+function tone(kind = "happy") {
+  if (!sound || paused || document.hidden) return;
+  try {
+    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+    audioContext.resume().catch(() => {});
+    const time = audioContext.currentTime;
+    [0, 0.13, 0.26].forEach((d, i) => {
+      const o = audioContext.createOscillator(),
+        g = audioContext.createGain();
+      o.frequency.value = kind === "water" ? 510 - i * 80 : 700 + i * 140;
+      g.gain.setValueAtTime(0, time + d);
+      g.gain.linearRampToValueAtTime(0.045, time + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, time + d + 0.17);
+      o.connect(g);
+      g.connect(audioContext.destination);
+      o.start(time + d);
+      o.stop(time + d + 0.18);
+    });
+  } catch {}
+}
+function effect(id, icon) {
+  const w = walkers[id];
+  const e = document.createElement("span");
+  e.className = "effect";
+  e.textContent = icon;
+  e.style.left = w.x + "%";
+  e.style.top = w.y - 12 + "%";
+  $("#effects").append(e);
+  effects.set(e, 1.8);
+}
+function select(ids) {
+  if (paused || (typeof miniGame !== "undefined" && miniGame)) return;
+  selected = ids;
+  for (const id of Object.keys(pets)) {
+    $("#" + id).classList.toggle("selected", ids.includes(id));
+    $("#select-" + id).classList.toggle("selected", ids.includes(id));
+    $("#select-" + id).setAttribute("aria-pressed", ids.includes(id));
+  }
+  $("#both").setAttribute("aria-pressed", ids.length === 2);
+  tone();
+}
+for (const id of Object.keys(pets)) {
+  for (const button of [$("#" + id), $("#select-" + id)])
+    button.addEventListener("click", () => select([id]));
+}
+$("#both").addEventListener("click", () => select(["august", "molly"]));
+function closeFood() {
+  $("#food-drawer").hidden = true;
+  $("#food-menu").setAttribute("aria-expanded", false);
+}
+$("#food-menu").addEventListener("click", () => {
+  if (paused) return;
+  hideGames();
+  const open = $("#food-drawer").hidden;
+  $("#food-drawer").hidden = !open;
+  $("#food-menu").setAttribute("aria-expanded", open);
+});
+$$("[data-food]").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (paused) return;
+    endMiniGame();
+    closeFood();
+    stopSearch();
+    startFeeding([...selected], b.dataset.food);
+  }),
+);
+$("#refill").addEventListener("click", () => {
+  if (paused) return;
+  water = 100;
+  Object.values(pets).forEach((p) => (p.water = 100));
+  react("💧💙");
+  tone("water");
+  update();
+  for (const id of Object.keys(pets)) effect(id, "💧");
+});
+function perform(mode, icon, duration) {
+  if (paused) return;
+  if (typeof endMiniGame === "function") endMiniGame();
+  closeFood();
+  hideGames();
+  stopSearch();
+  for (const id of selected) {
+    if (mode === "house") goHome(id);
+    else {
+      doBehavior(id, mode, duration);
+      pets[id].joy = Math.min(100, pets[id].joy + 10);
+      effect(id, icon);
+    }
+  }
+  react(icon);
+  tone();
+  update();
+}
+$("#home").addEventListener("click", () => perform("house", "🏠", 0));
+$("#scratch").addEventListener("click", () => perform("scratching", "🐾", 3.8));
+$("#cuddle").addEventListener("click", () => perform("cuddling", "💕", 3));
+$("#popcorn").addEventListener("click", () => perform("hopping", "✨", 2.2));
+function stopSearch() {
+  searchActive = false;
+  searchResultTime = 0;
+  $("#search-items").replaceChildren();
+  $("#search-progress").hidden = true;
+  $("#search").setAttribute("aria-pressed", false);
+}
+$("#search").addEventListener("click", () => {
+  if (paused) return;
+  if (typeof endMiniGame === "function") endMiniGame();
+  $("#games-drawer").hidden = true;
+  $("#games").setAttribute("aria-expanded", false);
+  if (searchActive) {
+    stopSearch();
+    return;
+  }
+  closeFood();
+  cancelAllFeeding();
+  searchActive = true;
+  found = 0;
+  $("#search").setAttribute("aria-pressed", true);
+  $("#search-progress").hidden = false;
+  $$("#search-progress span").forEach((s) => s.classList.remove("found"));
+  const targets = [...selected];
+  [
+    [24, 51, "🥬"],
+    [76, 57, "🥒"],
+    [49, 77, "🫑"],
+  ].forEach(([x, y, icon], i) => {
+    let collected = false;
+    const b = document.createElement("button");
+    b.className = "search-item";
+    b.style.left = x + "%";
+    b.style.top = y + "%";
+    b.textContent = icon;
+    b.setAttribute("aria-label", "Leckerei finden");
+    b.addEventListener("click", () => {
+      if (paused || collected || !searchActive) return;
+      collected = true;
+      b.remove();
+      found++;
+      $$("#search-progress span")[i].classList.add("found");
+      const isLast = found === 3;
+      targets.forEach((id, j) =>
+        sendPet(id, clamp(x, 28, 72) + (targets.length === 2 ? (j ? 10 : -10) : 0), y, () => {
+          doBehavior(
+            id,
+            isLast ? "dancing" : "eating",
+            isLast ? 4 : 2,
+          );
+          effect(id, icon);
+        }),
+      );
+      tone();
+      if (found === 3) {
+        react("🌟🌟🌟");
+        searchActive = false;
+        $("#search").setAttribute("aria-pressed", false);
+        for (const id of targets) pets[id].joy = 100;
+        update();
+        searchResultTime = 2.5;
+      }
+    });
+    $("#search-items").append(b);
+  });
+  react("🔎🥬");
+});
+function setPause(value) {
+  paused = value;
+  document.body.classList.toggle("paused", value);
+  $("#pause-overlay").hidden = !value;
+  $("#pause").setAttribute("aria-pressed", value);
+  $$("nav button,.top-tools button,.pig,.search-item").forEach(
+    (b) => (b.disabled = value),
+  );
+  if (value) $("#resume").focus();
+  else $("#pause").focus();
+  if (audioContext) {
+    (value ? audioContext.suspend() : audioContext.resume()).catch(() => {});
+  }
+}
+$("#pause").addEventListener("click", () => setPause(true));
+$("#resume").addEventListener("click", () => setPause(false));
+$("#sound").addEventListener("click", () => {
+  sound = !sound;
+  $("#sound").textContent = sound ? "🔊" : "🔇";
+  $("#sound").setAttribute("aria-pressed", sound);
+  $("#sound").setAttribute(
+    "aria-label",
+    sound ? "Ton ausschalten" : "Ton einschalten",
+  );
+  tone();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closeFood();
+    hideGames();
+    if (paused) { setPause(false); return; }
+    endMiniGame();
+  }
+});
+function stepGameUi(dt) {
+  reactionTime = Math.max(0, reactionTime - dt);
+  if (!reactionTime) $("#reaction").classList.remove("visible");
+  if (searchResultTime > 0) {
+    searchResultTime = Math.max(0, searchResultTime - dt);
+    if (!searchResultTime) $("#search-progress").hidden = true;
+  }
+  for (const [el, remaining] of effects) {
+    if (remaining <= dt) { el.remove(); effects.delete(el); }
+    else effects.set(el, remaining - dt);
+  }
+  needsTime += dt;
+  if (needsTime >= 15) {
+    needsTime -= 15;
+    for (const p of Object.values(pets)) {
+      p.food = Math.max(35, p.food - 0.5);
+      p.water = Math.max(35, p.water - 0.4);
+      p.joy = Math.max(40, p.joy - 0.4);
+    }
+    water = Math.max(10, water - 0.5);
+    update();
+  }
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && !paused) setPause(true);
+});
+update();
