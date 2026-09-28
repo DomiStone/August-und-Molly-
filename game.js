@@ -24,6 +24,7 @@ function update() {
         Math.round(p[key]) + "%",
       );
   $("#water-fill").style.width = water + "%";
+  if (typeof refreshCompanionUi === "function") refreshCompanionUi();
 }
 function message(text) {
   $("#message").textContent = text;
@@ -42,7 +43,9 @@ function tone(kind = "happy") {
     [0, 0.13, 0.26].forEach((d, i) => {
       const o = audioContext.createOscillator(),
         g = audioContext.createGain();
-      o.frequency.value = kind === "water" ? 510 - i * 80 : 700 + i * 140;
+      const notes = { water: [510, 430, 350], sleepy: [330, 294, 262],
+        curious: [520, 660, 590], favorite: [660, 880, 990] };
+      o.frequency.value = (notes[kind] || [700, 840, 980])[i];
       g.gain.setValueAtTime(0, time + d);
       g.gain.linearRampToValueAtTime(0.045, time + d + 0.02);
       g.gain.exponentialRampToValueAtTime(0.001, time + d + 0.17);
@@ -72,6 +75,7 @@ function select(ids) {
     $("#select-" + id).setAttribute("aria-pressed", ids.includes(id));
   }
   $("#both").setAttribute("aria-pressed", ids.length === 2);
+  if (typeof refreshCompanionUi === "function") refreshCompanionUi();
   tone();
 }
 for (const id of Object.keys(pets)) {
@@ -85,6 +89,7 @@ function closeFood() {
 }
 $("#food-menu").addEventListener("click", () => {
   if (paused) return;
+  if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   hideGames();
   const open = $("#food-drawer").hidden;
   $("#food-drawer").hidden = !open;
@@ -125,6 +130,8 @@ function perform(mode, icon, duration) {
   react(icon);
   tone();
   update();
+  if (mode === "cuddling" && typeof rememberMoment === "function")
+    rememberMoment("cuddle");
 }
 $("#home").addEventListener("click", () => perform("house", "🏠", 0));
 $("#scratch").addEventListener("click", () => perform("scratching", "🐾", 3.8));
@@ -148,6 +155,7 @@ $("#search").addEventListener("click", () => {
   }
   closeFood();
   cancelAllFeeding();
+  if (typeof cancelAllCompanionActions === "function") cancelAllCompanionActions();
   searchActive = true;
   found = 0;
   $("#search").setAttribute("aria-pressed", true);
@@ -186,6 +194,7 @@ $("#search").addEventListener("click", () => {
       );
       tone();
       if (found === 3) {
+        if (typeof rememberMoment === "function") rememberMoment("search");
         react("🌟🌟🌟");
         searchActive = false;
         $("#search").setAttribute("aria-pressed", false);
@@ -199,6 +208,7 @@ $("#search").addEventListener("click", () => {
   react("🔎🥬");
 });
 function setPause(value) {
+  if (value && typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   paused = value;
   document.body.classList.toggle("paused", value);
   $("#pause-overlay").hidden = !value;
@@ -229,6 +239,7 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     closeFood();
     hideGames();
+    if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
     if (paused) {
       setPause(false);
       return;
@@ -263,5 +274,6 @@ function stepGameUi(dt) {
 }
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && !paused) setPause(true);
+  if (document.hidden && typeof saveCompanions === "function") saveCompanions();
 });
 update();

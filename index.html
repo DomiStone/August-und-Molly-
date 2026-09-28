@@ -44,6 +44,14 @@
       <div id="effects" aria-hidden="true"></div>
       <div id="food-layer" aria-hidden="true"></div>
       <div id="search-items"></div>
+      <button id="willow-ball" class="world-object" aria-label="Mit dem Weidenball spielen">
+        <svg viewBox="0 0 80 80" aria-hidden="true"><ellipse cx="40" cy="68" rx="27" ry="6" fill="#49322130"/><circle cx="40" cy="36" r="29" fill="#b18a51" stroke="#715731" stroke-width="3"/><g fill="none" stroke="#e6c38b" stroke-width="5"><ellipse cx="40" cy="36" rx="14" ry="28"/><ellipse cx="40" cy="36" rx="27" ry="12"/><path d="M19 16Q62 27 60 57M15 54Q22 21 63 21"/></g><path d="M38 11Q42-2 60 4Q55 19 38 11" fill="#779b4d"/></svg>
+      </button>
+      <button id="drink-bowl" class="world-object" aria-label="Zum Wassernapf gehen und trinken">
+        <svg viewBox="0 0 100 65" aria-hidden="true"><ellipse cx="50" cy="53" rx="42" ry="8" fill="#49322130"/><path d="M9 23Q12 57 50 57Q88 57 91 23" fill="#d2b88e" stroke="#856d50" stroke-width="3"/><ellipse cx="50" cy="23" rx="41" ry="16" fill="#8bc5d8" stroke="#faf1d9" stroke-width="6"/><path d="M25 22Q42 15 57 20" fill="none" stroke="#efffff" stroke-width="3"/></svg>
+      </button>
+      <div id="flower-garland" hidden aria-hidden="true">🌼 🌿 🌼 🌿 🌼</div>
+      <p id="cozy-notice" role="status" aria-live="polite" hidden></p>
       <div id="reaction" aria-hidden="true"></div>
       <nav class="pet-rail" aria-label="Meerschweinchen auswählen">
         <button
@@ -76,6 +84,7 @@
         </button>
       </nav>
       <div class="top-tools">
+        <button class="round" id="companion-menu" aria-label="Mein Gehege und Pflegealbum" aria-expanded="false" aria-controls="companion-panel">📖</button>
         <button
           class="round"
           id="sound"
@@ -92,6 +101,24 @@
           ⏸
         </button>
       </div>
+      <aside id="companion-panel" class="cozy-panel" aria-label="Mein Gehege" hidden>
+        <header><div><small>August & Molly</small><h1>Mein Gehege</h1></div><button id="companion-close" aria-label="Gehege-Menü schließen">✕</button></header>
+        <p class="cozy-intro">Kleine Freunde, große Lieblingsmomente. Alles in eurem Tempo.</p>
+        <div id="companion-cards"></div>
+        <h2>Zeit zusammen</h2>
+        <p id="companion-selection"></p>
+        <div class="cozy-actions">
+          <button id="nap">🌙<span>Dösen</span></button>
+          <button id="play-ball">🌿<span>Ball spielen</span></button>
+          <button id="call-pets">💛<span>Zu mir</span></button>
+          <button id="move-ball">🧺<span>Ball umstellen</span></button>
+        </div>
+        <h2>Unser Pflegealbum <span id="album-count"></span></h2>
+        <p class="cozy-intro">Sammelt schöne Erinnerungen. Nach drei Stickern gibt es eine Blumen-Girlande.</p>
+        <div id="album-stickers"></div>
+        <button id="toggle-flowers" hidden aria-pressed="false">🌼 Blumen-Girlande aufhängen</button>
+        <p id="save-status" class="cozy-intro">Nur auf diesem Gerät gespeichert. Keine Nachteile, wenn ihr eine Pause macht.</p>
+      </aside>
       <nav class="action-rail" aria-label="Füttern und versorgen">
         <div class="food-drawer" id="food-drawer" hidden>
           <button
@@ -259,6 +286,7 @@
     <script src="feeding.js"></script>
     <script src="movement.js"></script>
     <script src="minigames.js"></script>
+    <script src="companions.js"></script>
     <script src="offline.js"></script>
   </body>
 </html>

@@ -43,3 +43,28 @@ Ein physisches Android-/Fire-Gerät steht in dieser Umgebung nicht zur Verfügun
 Die vorhandenen Tierbilder werden weiterverwendet: sanfte Knabberbewegungen
 bewegen das Bild, sie sind kein neues anatomisch animiertes Kiefermodell.
 Offline-Verfügbarkeit setzt einen erfolgreichen ersten Cache-Aufbau voraus.
+# Gemütliche Begleiter (Weiterentwicklung)
+
+Die vorhandene Architektur und alle Tier-/Hintergrundassets bleiben erhalten.
+Die Analyse zeigte fehlende dauerhafte Spielstände, sehr ähnliche zyklische
+Idle-Aktionen und unbeschriftete Bedürfnisse. Ergänzt wurden eigene Vorlieben,
+sanfte Energie, Nickerchen, Trink- und Ballaktionen, ein lesbares Statusmenü,
+ein einmaliges Stickeralbum und optionale Girlandendekoration. Keine weiteren
+bestrafenden Bedürfnisse oder künstlichen Futter-Freischaltungen.
+
+Zusätzlich behoben: natürliche Aktionen durften zuvor einen noch laufenden
+Ankunfts-Callback ersetzen. Jetzt haben explizite Bewegungsaufträge Vorrang.
+Begleiter-Aktivitäten besitzen wie Fütterungen genau einen abbrechbaren Ablauf
+pro Tier. Größe/Orientierung der bestehenden Fotos bleibt erhalten.
+
+Erweiterte Tests:
+- Alle bisherigen Regressionen einschließlich 15 Futter-/Tierkombinationen.
+- Dösen/Energie, Pause, Ball/Trinken, Wiederholung und Abbruch durch andere Aktionen.
+- Vorlieben, individuelle Profile, einmalige Sticker und dekorative Belohnung.
+- Herbeirufen, Ball umstellen, Album in allen vier Bildschirmgrößen.
+- Speichern/Laden, ungültige Werte, beschädigtes JSON und nicht verfügbarer Speicher.
+- Offline-Neustart ohne wiederbelebte Aktivitäten oder Abwesenheits-Strafe.
+
+Nickerchen nutzt die vorhandenen Tierfotos mit ruhiger Körperbewegung und
+Schlafzeichen; es gibt keine neu gezeichneten geschlossenen Augen oder getrennten
+Kiefer. Kein physisches Fire-Tablet verfügbar: responsive Prüfung in Chromium.

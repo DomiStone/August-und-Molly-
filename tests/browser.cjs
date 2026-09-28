@@ -292,6 +292,55 @@ let browser, page;
   assert.equal(await state("walkers.august.mode"), "mini-ready");
   await click("mini-close");
   pass("dance: wrong/correct symbols, reward, no autonomous wandering");
+  await click("both");
+  await click("companion-menu");
+  assert.equal(await page.locator("#companion-panel").isVisible(), true);
+  assert.match(await page.locator("#companion-cards").innerText(), /Neugieriger Entdecker/);
+  assert.match(await page.locator("#companion-cards").innerText(), /Gemütliche Genießerin/);
+  await click("nap");
+  for (let i=0;i<30 && await state('walkers.august.mode!=="napping" || walkers.molly.mode!=="napping"');i++) await tick(300);
+  assert.equal(await state('walkers.august.mode'), 'napping');
+  await page.screenshot({path:path.join(results,"cozy-nap.png")});
+  const cozyState = await state('JSON.stringify([...companionActions.values()])');
+  await click("pause");
+  await tick(5000);
+  assert.equal(await state('JSON.stringify([...companionActions.values()])'),cozyState);
+  await click("resume");
+  await tick(19000);
+  assert.equal(await state('memories.has("rest")'),true);
+  await click("willow-ball");
+  await click("willow-ball");
+  assert.equal(await state('companionActions.size'),2);
+  await tick(25000);
+  assert.equal(await state('memories.has("ball")'),true);
+  await click("drink-bowl");
+  for(let i=0;i<40 && await state('walkers.molly.mode!=="drinking"');i++)await tick(300);
+  assert.equal(await state('walkers.molly.mode'),'drinking');
+  await tick(18000);
+  assert.equal(await state('[...companionActions.values()].some(a=>a.kind==="drinking")'),false);
+  await click("companion-menu");
+  await click("nap");
+  await feed("Heu","both");
+  assert.equal(await state('companionActions.size'),0);
+  await settle();
+  await click("companion-menu");
+  await click("call-pets");
+  assert.equal(await state('walkers.august.tx'),34);
+  assert.equal(await state('walkers.molly.tx'),68);
+  await tick(12000);
+  const previousBall = await state('ballPlace');
+  await click("companion-menu");
+  await click("move-ball");
+  assert.notEqual(await state('ballPlace'),previousBall);
+  await click("companion-menu");
+  assert.equal(await page.locator("#toggle-flowers").isVisible(),true);
+  await click("toggle-flowers");
+  assert.equal(await page.locator("#flower-garland").isVisible(),true);
+  await page.screenshot({path:path.join(results,"cozy-album.png")});
+  await click("companion-close");
+  const durable = await state('JSON.parse(localStorage.getItem(COMPANION_SAVE_KEY))');
+  assert.ok(durable.memories.includes('favorite'));
+  pass("personalities, naps, pause, drinking, toy/repeat/cancel, recall, rearrangement and album rewards");
   for (const size of [
     { width: 1024, height: 600 },
     { width: 600, height: 1024 },
@@ -335,12 +384,25 @@ let browser, page;
     assert.ok(menu.x >= 0 && menu.x + menu.width <= size.width);
     await click("mini-close");
     await settle();
+    await click("companion-menu");
+    await page.locator("#toggle-flowers").scrollIntoViewIfNeeded();
+    const panelBox = await page.locator("#companion-panel").boundingBox();
+    assert.ok(panelBox.x>=0 && panelBox.y>=0 && panelBox.x+panelBox.width<=size.width+1 && panelBox.y+panelBox.height<=size.height+1);
+    assert.equal(await page.locator("#companion-panel").evaluate(e=>e.scrollWidth>e.clientWidth),false);
+    await page.screenshot({path:path.join(results,`album-${size.width}x${size.height}.png`)});
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("#companion-panel").isVisible(),false);
   }
   pass(
     "responsive controls, feeding and minigames at 1024x600, 600x1024, 800x480, 360x640",
   );
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
+  assert.equal(await state('flowers'),durable.flowers);
+  assert.equal(await state('ballPlace'),durable.ballPlace);
+  assert.deepEqual(await state('[...memories].sort()'),durable.memories.sort());
+  assert.equal(await state('companionActions.size'),0);
+  pass("local save survives reload without restoring in-flight activities or offline need decay");
   await page.evaluate(() =>
     Promise.all([...document.images].map((i) => i.decode())),
   );

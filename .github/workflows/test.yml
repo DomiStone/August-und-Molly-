@@ -1,7 +1,7 @@
 name: Game regression and browser tests
 on:
   push:
-    branches: [main, repair/stable-feeding]
+    branches: [main, repair/stable-feeding, feature/cozy-companions]
   pull_request:
     branches: [main]
 permissions:

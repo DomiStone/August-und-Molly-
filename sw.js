@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "august-molly-stable-feeding-v1";
+const CACHE = "august-molly-cozy-v2";
 const FILES = [
   "./",
   "index.html",
@@ -9,6 +9,7 @@ const FILES = [
   "minigames.js",
   "food-view.js",
   "feeding.js",
+  "companions.js",
   "offline.js",
   "assets/august.png",
   "assets/molly.png",
