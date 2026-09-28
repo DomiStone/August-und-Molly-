@@ -70,6 +70,7 @@ function takeOutside(w) {
 }
 function sendPet(id, x, y, onArrival = null) {
   cancelFeeding(id);
+  if (typeof cancelCompanionAction === "function") cancelCompanionAction(id);
   const w = walkers[id];
   takeOutside(w);
   w.tx = clamp(x, 17, 83);
@@ -82,6 +83,7 @@ function sendPet(id, x, y, onArrival = null) {
 }
 function doBehavior(id, mode, duration = 3) {
   cancelFeeding(id);
+  if (typeof cancelCompanionAction === "function") cancelCompanionAction(id);
   const w = walkers[id];
   takeOutside(w);
   w.mode = mode;
@@ -140,8 +142,13 @@ function stepMovement(dt) {
   simulationTime += dt;
   stepGameUi(dt);
   stepFeeding(dt);
+  if (typeof stepCompanions === "function") stepCompanions(dt);
   if (typeof stepMiniGame === "function") stepMiniGame(dt);
   for (const w of Object.values(walkers)) {
+    if (["napping", "playing", "drinking"].includes(w.mode)) {
+      renderWalker(w, false);
+      continue;
+    }
     if (w.mode === "feeding") {
       renderWalker(w, false);
       continue;
@@ -250,9 +257,15 @@ function stepMovement(dt) {
       !(typeof miniGame !== "undefined" && miniGame) &&
       !searchActive &&
       !feedings.has(w.id) &&
+      !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id)) &&
+      !w.arrival &&
       w.mode !== "to-house" &&
       simulationTime >= w.nextNatural
     ) {
+      if (typeof naturalCompanionBehavior === "function") {
+        naturalCompanionBehavior(w);
+        continue;
+      }
       w.cycle++;
       if (w.cycle % 3 === 2) goHome(w.id);
       else
@@ -296,6 +309,7 @@ function stepMovement(dt) {
     if (
       sep < 17 &&
       !feedings.has(w.id) &&
+      !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id)) &&
       w.mode !== "to-house" &&
       !["inside", "peeking", "entering"].includes(other.mode)
     ) {
@@ -329,7 +343,7 @@ $("#habitat").addEventListener("click", (e) => {
     paused ||
     searchActive ||
     (typeof miniGame !== "undefined" && miniGame) ||
-    e.target.closest("button,nav,.top-tools")
+    e.target.closest("button,nav,.top-tools,.cozy-panel")
   )
     return;
   closeFood();

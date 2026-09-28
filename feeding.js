@@ -113,6 +113,7 @@ function finishFeeding(action) {
   update();
   effect(action.id, "💕");
   message(`${pet.name} hat das Futter ganz aufgegessen.`);
+  if (typeof foodMemory === "function") foodMemory(action.id, action.type);
 }
 
 function stepFeeding(dt) {

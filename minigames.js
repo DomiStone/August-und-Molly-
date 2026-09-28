@@ -8,6 +8,7 @@ function hideGames() {
 }
 $("#games").addEventListener("click", () => {
   if (paused) return;
+  if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   closeFood();
   const show = $("#games-drawer").hidden;
   $("#games-drawer").hidden = !show;
@@ -31,6 +32,8 @@ function endMiniGame() {
 }
 function startMiniGame(type) {
   if (paused) return;
+  if (typeof cancelAllCompanionActions === "function") cancelAllCompanionActions();
+  if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   cancelAllFeeding();
   endMiniGame();
   stopSearch();
@@ -91,6 +94,7 @@ function nextDanceCue() {
 }
 function winMiniGame() {
   const g = miniGame;
+  if (typeof rememberMoment === "function") rememberMoment(g.type);
   g.phase = "won";
   $("#jump-now").hidden = true;
   $("#dance-controls").hidden = true;

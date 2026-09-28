@@ -75,6 +75,11 @@ const groups = {
   "#search-progress span": Array.from({ length: 3 }, () => new Element()),
 };
 const context = vm.createContext({
+  localStorage: {
+    value: null,
+    getItem() { return this.value; },
+    setItem(key, value) { this.value = value; },
+  },
   document: {
     querySelector: el,
     querySelectorAll: (s) => groups[s] || [],
@@ -94,7 +99,7 @@ const context = vm.createContext({
     throw Error("Unowned interval added");
   },
 });
-for (const name of ["game", "food-view", "feeding", "movement", "minigames"])
+for (const name of ["game", "food-view", "feeding", "movement", "minigames", "companions"])
   vm.runInContext(fs.readFileSync(name + ".js", "utf8"), context, {
     filename: name + ".js",
   });
@@ -206,3 +211,51 @@ assert.equal(run("miniGame"), null);
 console.log(
   "PASS: 15 feeding combinations, repeated taps, pause, cancel/cleanup, independent pets, all house states, care, search, jump, dance, replay.",
 );
+
+run("endMiniGame();stopSearch();select(['august','molly']);pets.august.energy=45;pets.molly.energy=50;useCompanionActivity('napping')");
+step(10);
+assert.equal(run("walkers.august.mode"), "napping");
+const napState = run("JSON.stringify([...companionActions.values()])");
+const energy = run("pets.august.energy");
+run("setPause(true)");
+step(30);
+assert.equal(run("JSON.stringify([...companionActions.values()])"), napState);
+assert.equal(run("pets.august.energy"), energy);
+run("setPause(false)");
+step(17);
+assert.ok(run("pets.august.energy") > energy);
+assert.ok(run("memories.has('rest')"));
+run("useCompanionActivity('playing')");
+for (let i = 0; i < 8; i++) run("useCompanionActivity('playing')");
+assert.equal(run("companionActions.size"), 2);
+step(25);
+assert.ok(run("memories.has('ball')"));
+run("useCompanionActivity('drinking');pets.august.water=45;pets.molly.water=45");
+step(25);
+assert.ok(run("pets.august.water") > 70);
+assert.ok(run("pets.molly.water") > 70);
+for (const code of ["sendPet('august',30,60)", "doBehavior('august','scratching')", "startFeeding(['august'],'Heu')", "startMiniGame('dance')"]) {
+  run("endMiniGame();cancelAllFeeding();startCompanionAction('august','playing')");
+  run(code);
+  assert.equal(run("companionActions.has('august')"), false, code);
+}
+run("endMiniGame();cancelAllCompanionActions();startFeeding(['august'],'Karotte')");
+step(25);
+assert.ok(run("memories.has('favorite')"));
+const count = run("memories.size");
+run("foodMemory('august','Karotte');foodMemory('august','Karotte')");
+assert.equal(run("memories.size"), count);
+run("ballPlace=2;flowers=true;pets.august.energy=63;saveCompanions();pets.august.energy=35;ballPlace=0;flowers=false;restoreCompanions()");
+assert.equal(run("pets.august.energy"), 63);
+assert.equal(run("ballPlace"), 2);
+assert.equal(run("flowers"), true);
+run("localStorage.value='{broken';restoreCompanions()");
+run("localStorage.value=JSON.stringify({version:1,pets:{august:{food:-500,water:'bad',energy:500}},memories:['__proto__','unknown'],ballPlace:999});restoreCompanions()");
+assert.equal(run("pets.august.food"), 35);
+assert.equal(run("pets.august.energy"), 100);
+assert.ok(run("Number.isFinite(pets.august.water)"));
+run("localStorage.setItem=()=>{throw Error('blocked')};saveCompanions()");
+assert.equal(run("storageAvailable"), false);
+run("cancelAllCompanionActions();cancelAllFeeding();pets.august.energy=40;naturalCompanionBehavior(walkers.august)");
+assert.equal(run("companionActions.get('august').kind"), "napping");
+console.log("PASS: companion activities, pause, cancellation, favorites, unique memories, bounded storage restore and blocked/corrupt storage.");
