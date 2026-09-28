@@ -917,7 +917,8 @@ button:hover:not(:disabled) {
 }
 .pig.feeding > img {
   animation: none;
-  transform-origin: var(--mouth-origin);
+  /* Keep mirroring centered: a mouth-based origin shifts Molly by half a body. */
+  transform-origin: 50% 50%;
   transform: translateY(var(--chew-y, 0px)) rotate(var(--chew-angle, 0deg));
 }
 .pig.feeding .selected-heart {

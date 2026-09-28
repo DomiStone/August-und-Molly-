@@ -34,11 +34,6 @@ function layoutFeeding(action) {
   action.view.el.style.left = action.foodX + "px";
   action.view.el.style.top = action.foodY - g.foodWidth * 0.2 + "px";
   action.view.el.style.width = g.foodWidth + "px";
-  // Both resting sprites now face right towards their separate food portions.
-  w.el.style.setProperty(
-    "--mouth-origin",
-    w.id === "august" ? "78% 52%" : "22% 48%",
-  );
 }
 
 function startFeeding(ids, type) {

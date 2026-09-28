@@ -77,7 +77,8 @@ let browser, page;
   const click = (id) => page.locator("#" + id).click();
   const state = (expr) => page.evaluate(expr);
   const settle = async () => {
-    await tick(26000);
+    for (let i=0;i<52 && await state('feedings.size');i++) await tick(500);
+    assert.equal(await state('feedings.size'),0,'feeding failed to settle');
   };
   const feed = async (type, choice) => {
     await click(choice);
@@ -152,12 +153,21 @@ let browser, page;
         const portions = await page
           .locator(".food-object")
           .evaluateAll((es) =>
-            es.map((e) => ({
+            es.map((e) => {
+              const pet=document.querySelector('#'+e.dataset.pet);
+              const r=pet.querySelector('img').getBoundingClientRect();
+              const f=e.getBoundingClientRect();
+              const biteX=e.dataset.food==='Heu' ? 0 : Number(e.querySelector('.bite-mask').getAttribute('points').split(',')[0])+2;
+              const mouthX=r.left+r.width*.775;
+              const mouthY=r.top+(r.height-r.width/1.5)/2+r.width/1.5*(e.dataset.pet==='august'?.52:.48);
+              return {
               id: e.dataset.pet,
               bite: Number(e.dataset.bite),
               width: e.getBoundingClientRect().width,
               clip: e.querySelector(".bite-mask").getAttribute("points"),
-            })),
+              eating:pet.dataset.mode==='feeding',
+              gap:Math.hypot(mouthX-(f.left+Math.max(0,biteX)/120*f.width),mouthY-(f.top+f.height/2)),
+            }}),
           );
         for (const f of portions) {
           const old = stages.get(f.id);
@@ -166,9 +176,11 @@ let browser, page;
             assert.ok(Math.abs(old.width - f.width) < 0.1);
           }
           stages.set(f.id, f);
+          if(f.eating)assert.ok(f.gap<6,`${type}/${f.id}: mouth is ${f.gap}px from bite edge`);
         }
       }
       await settle();
+      for(const id of ids)assert.ok(stages.get(id)?.bite>1,`missing visible bite stages: ${type}/${id}`);
       assert.equal(await page.locator(".food-object").count(), 0);
       assert.equal(await state("feedings.size"), 0);
       for (const id of ids)
