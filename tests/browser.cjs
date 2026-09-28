@@ -316,6 +316,13 @@ let browser, page;
   await click("drink-bowl");
   for(let i=0;i<40 && await state('walkers.molly.mode!=="drinking"');i++)await tick(300);
   assert.equal(await state('walkers.molly.mode'),'drinking');
+  await click("pause");
+  const beforeRotation = await state('[...companionActions.values()].map(a=>[a.id,a.kind,a.elapsed])');
+  await page.setViewportSize({width:600,height:1024});
+  await tick(1500);
+  assert.deepEqual(await state('[...companionActions.values()].map(a=>[a.id,a.kind,a.elapsed])'),beforeRotation);
+  await click("resume");
+  await page.setViewportSize({width:1024,height:600});
   await tick(18000);
   assert.equal(await state('[...companionActions.values()].some(a=>a.kind==="drinking")'),false);
   await click("companion-menu");
@@ -403,6 +410,27 @@ let browser, page;
   assert.deepEqual(await state('[...memories].sort()'),durable.memories.sort());
   assert.equal(await state('companionActions.size'),0);
   pass("local save survives reload without restoring in-flight activities or offline need decay");
+  for (const seed of ["{broken", JSON.stringify({version:1,pets:{august:{food:-400,energy:900}},memories:["__proto__","rest"],ballPlace:999})]) {
+    const probe = await browser.newContext();
+    await probe.addInitScript(value => localStorage.setItem("august-molly:companions:v1",value),seed);
+    const probePage = await probe.newPage();
+    probePage.on('pageerror', e=>errors.push(e.message));
+    await probePage.goto(origin);
+    assert.ok(await probePage.evaluate(()=>Number.isFinite(pets.august.food)&&pets.august.food>=35&&pets.august.energy<=100));
+    assert.equal(await probePage.locator('#companion-menu').isVisible(),true);
+    await probe.close();
+  }
+  const blockedStorage = await browser.newContext();
+  await blockedStorage.addInitScript(()=>Object.defineProperty(window,'localStorage',{get(){throw new Error('storage blocked for test')}}));
+  const blockedPage = await blockedStorage.newPage();
+  blockedPage.on('pageerror',e=>errors.push(e.message));
+  await blockedPage.goto(origin);
+  await blockedPage.locator('#companion-menu').click();
+  assert.match(await blockedPage.locator('#save-status').innerText(),/nicht verfügbar/);
+  await blockedPage.locator('#nap').click();
+  assert.equal(await blockedPage.evaluate(()=>companionActions.size),2);
+  await blockedStorage.close();
+  pass("corrupt/invalid save recovery and fully playable with storage blocked");
   await page.evaluate(() =>
     Promise.all([...document.images].map((i) => i.decode())),
   );

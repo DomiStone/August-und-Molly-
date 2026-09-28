@@ -43,7 +43,8 @@ Ein physisches Android-/Fire-Gerät steht in dieser Umgebung nicht zur Verfügun
 Die vorhandenen Tierbilder werden weiterverwendet: sanfte Knabberbewegungen
 bewegen das Bild, sie sind kein neues anatomisch animiertes Kiefermodell.
 Offline-Verfügbarkeit setzt einen erfolgreichen ersten Cache-Aufbau voraus.
-# Gemütliche Begleiter (Weiterentwicklung)
+
+## Gemütliche Begleiter (Weiterentwicklung)
 
 Die vorhandene Architektur und alle Tier-/Hintergrundassets bleiben erhalten.
 Die Analyse zeigte fehlende dauerhafte Spielstände, sehr ähnliche zyklische
@@ -58,6 +59,7 @@ Begleiter-Aktivitäten besitzen wie Fütterungen genau einen abbrechbaren Ablauf
 pro Tier. Größe/Orientierung der bestehenden Fotos bleibt erhalten.
 
 Erweiterte Tests:
+
 - Alle bisherigen Regressionen einschließlich 15 Futter-/Tierkombinationen.
 - Dösen/Energie, Pause, Ball/Trinken, Wiederholung und Abbruch durch andere Aktionen.
 - Vorlieben, individuelle Profile, einmalige Sticker und dekorative Belohnung.

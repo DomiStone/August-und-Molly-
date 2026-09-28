@@ -18,7 +18,7 @@ const MOMENTS = {
 };
 const companionActions = new Map();
 const ballPlaces = [{ x: 46, y: 76 }, { x: 33, y: 52 }, { x: 65, y: 55 }];
-const bowlPlace = { x: 79, y: 57 };
+const bowlPlace = { x: 70, y: 57 };
 const memories = new Set();
 let ballPlace = 0, flowers = false, storageAvailable = true;
 let companionUiClock = 0, companionSaveClock = 0, noticeClock = 0;
@@ -193,11 +193,17 @@ function activityDestination(id, kind) {
   if (kind === "napping") return { x: id === "august" ? 30 : 69, y: id === "august" ? 64 : 72, direction: id === "august" ? 1 : -1 };
   const source = kind === "playing" ? ballPlaces[ballPlace] : bowlPlace;
   const side = id === "august" ? -1 : 1;
-  const g = feedingGeometry(walkers[id], source.y + 5);
   const objectWidth = $(kind === "playing" ? "#willow-ball" : "#drink-bowl").offsetWidth;
+  let y = source.y + 5, g;
+  // Account for perspective changing with the animal's final vertical position.
+  for (let i = 0; i < 4; i++) {
+    g = feedingGeometry(walkers[id], y);
+    const surfaceOffset = kind === "drinking" ? objectWidth * 0.1 : 0;
+    y = clamp(source.y - (g.mouthY + surfaceOffset) / g.height * 100, 42, 80);
+  }
   return {
     x: clamp(source.x + side * (g.mouthX + objectWidth * 0.24) / g.width * 100, 17, 83),
-    y: clamp(source.y - g.mouthY / g.height * 100, 42, 80),
+    y,
     direction: -side,
   };
 }
@@ -220,7 +226,7 @@ function startCompanionAction(id, kind) {
     action.phase = "active";
     tone(kind === "napping" ? "sleepy" : kind === "drinking" ? "water" : "curious");
   });
-  companionActions.set(id, { id, kind, phase: "approaching", elapsed: 0, duration: kind === "napping" ? 16 : 5 });
+  companionActions.set(id, { id, kind, target, phase: "approaching", elapsed: 0, duration: kind === "napping" ? 16 : 5 });
 }
 
 function finishCompanionAction(action) {
@@ -354,10 +360,18 @@ $("#toggle-flowers").addEventListener("click", () => {
 });
 window.addEventListener("pagehide", saveCompanions);
 window.addEventListener("resize", () => {
-  // Re-plan size-dependent mouth positions, never retain a stale arrival.
-  const pending = [...companionActions.values()].filter(a => a.kind !== "napping");
-  for (const action of pending) {
-    cancelCompanionAction(action.id);
-    if (!paused) startCompanionAction(action.id, action.kind);
+  // Keep the same owned action and elapsed time, including during pause.
+  for (const action of companionActions.values()) {
+    if (action.kind === "napping") continue;
+    Object.assign(action.target, activityDestination(action.id, action.kind));
+    const w = walkers[action.id];
+    if (action.phase === "approaching") {
+      w.tx = action.target.x;
+      w.ty = action.target.y;
+    } else {
+      w.x = action.target.x;
+      w.y = action.target.y;
+      renderWalker(w, false);
+    }
   }
 });
