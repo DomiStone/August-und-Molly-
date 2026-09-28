@@ -2,36 +2,43 @@
 
 // One owned action per pet. No timeout/interval callbacks survive cancellation.
 const feedings = new Map();
-const BITE_SECONDS = .82;
+const BITE_SECONDS = 0.82;
 
 function feedingGeometry(w, y) {
   const habitat = $("#habitat");
-  const width = habitat.clientWidth, height = habitat.clientHeight;
+  const width = habitat.clientWidth,
+    height = habitat.clientHeight;
   const petWidth = w.el.offsetWidth;
-  const petHeight = petWidth * 272 / 384;
-  const depth = clamp(.65 + (y - 37) * .011, .65, 1.13);
+  const petHeight = (petWidth * 272) / 384;
+  const depth = clamp(0.65 + (y - 37) * 0.011, 0.65, 1.13);
   // Native photographs have opposite directions and different mouth heights.
-  const mouthY = w.id === "august" ? .52 : .48;
+  const mouthY = w.id === "august" ? 0.52 : 0.48;
   const photoHeight = petWidth / 1.5;
   return {
-    width, height,
-    mouthX: petWidth * depth * .275,
-    mouthY: -.68 * petHeight + .78 * petHeight * (1-depth)
-      + depth * ((petHeight-photoHeight)/2 + photoHeight*mouthY),
-    foodWidth: clamp(width * .11, 64, 108),
+    width,
+    height,
+    mouthX: petWidth * depth * 0.275,
+    mouthY:
+      -0.68 * petHeight +
+      0.78 * petHeight * (1 - depth) +
+      depth * ((petHeight - photoHeight) / 2 + photoHeight * mouthY),
+    foodWidth: clamp(width * 0.11, 64, 108),
   };
 }
 
 function layoutFeeding(action) {
   const w = walkers[action.id];
-  const g = action.geometry = feedingGeometry(w, action.y);
-  action.foodX = action.startX * g.width / 100 + g.mouthX;
-  action.foodY = action.y * g.height / 100 + g.mouthY;
+  const g = (action.geometry = feedingGeometry(w, action.y));
+  action.foodX = (action.startX * g.width) / 100 + g.mouthX;
+  action.foodY = (action.y * g.height) / 100 + g.mouthY;
   action.view.el.style.left = action.foodX + "px";
-  action.view.el.style.top = (action.foodY - g.foodWidth * .2) + "px";
+  action.view.el.style.top = action.foodY - g.foodWidth * 0.2 + "px";
   action.view.el.style.width = g.foodWidth + "px";
   // Both resting sprites now face right towards their separate food portions.
-  w.el.style.setProperty("--mouth-origin", w.id === "august" ? "78% 52%" : "22% 48%");
+  w.el.style.setProperty(
+    "--mouth-origin",
+    w.id === "august" ? "78% 52%" : "22% 48%",
+  );
 }
 
 function startFeeding(ids, type) {
@@ -46,8 +53,16 @@ function startFeeding(ids, type) {
     const y = id === "august" ? 65 : 71;
     sendPet(id, startX, y, () => beginEating(id));
     const action = {
-      id, type, config, startX, y, phase: "approaching",
-      bite: 0, clock: 0, edge: 0, settle: 0,
+      id,
+      type,
+      config,
+      startX,
+      y,
+      phase: "approaching",
+      bite: 0,
+      clock: 0,
+      edge: 0,
+      settle: 0,
       view: createFoodView(id, type),
     };
     feedings.set(id, action);
@@ -111,12 +126,14 @@ function stepFeeding(dt) {
     const w = walkers[action.id];
     stepFoodCrumbs(action, dt);
     action.clock += dt;
-    const chew = Math.sin(Math.min(1, action.clock / BITE_SECONDS) * Math.PI * 2);
+    const chew = Math.sin(
+      Math.min(1, action.clock / BITE_SECONDS) * Math.PI * 2,
+    );
     w.el.style.setProperty("--chew-y", `${Math.max(0, chew) * 1.7}px`);
-    w.el.style.setProperty("--chew-angle", `${chew * .7}deg`);
+    w.el.style.setProperty("--chew-angle", `${chew * 0.7}deg`);
     if (action.phase === "finishing") {
       action.settle += dt;
-      if (action.settle >= .5) finishFeeding(action);
+      if (action.settle >= 0.5) finishFeeding(action);
       continue;
     }
     if (action.clock < BITE_SECONDS) continue;
@@ -125,8 +142,11 @@ function stepFeeding(dt) {
     renderFoodBite(action);
     spawnFoodCrumbs(action);
     // The pet follows the retreating bite edge; the food never slides/scales.
-    action.edge = action.type === "Heu" ? 0 : action.bite / action.config.bites * .88;
-    w.x = action.startX + action.edge * action.geometry.foodWidth / action.geometry.width * 100;
+    action.edge =
+      ((action.bite / action.config.bites) * action.config.length) / 120;
+    w.x =
+      action.startX +
+      ((action.edge * action.geometry.foodWidth) / action.geometry.width) * 100;
     if (action.bite === action.config.bites) {
       action.phase = "finishing";
       action.view.edible.style.visibility = "hidden";
@@ -138,7 +158,10 @@ window.addEventListener("resize", () => {
   for (const action of feedings.values()) {
     layoutFeeding(action);
     if (action.phase !== "approaching") {
-      walkers[action.id].x = action.startX + action.edge * action.geometry.foodWidth / action.geometry.width * 100;
+      walkers[action.id].x =
+        action.startX +
+        ((action.edge * action.geometry.foodWidth) / action.geometry.width) *
+          100;
     }
   }
 });

@@ -174,14 +174,15 @@ $("#search").addEventListener("click", () => {
       $$("#search-progress span")[i].classList.add("found");
       const isLast = found === 3;
       targets.forEach((id, j) =>
-        sendPet(id, clamp(x, 28, 72) + (targets.length === 2 ? (j ? 10 : -10) : 0), y, () => {
-          doBehavior(
-            id,
-            isLast ? "dancing" : "eating",
-            isLast ? 4 : 2,
-          );
-          effect(id, icon);
-        }),
+        sendPet(
+          id,
+          clamp(x, 28, 72) + (targets.length === 2 ? (j ? 10 : -10) : 0),
+          y,
+          () => {
+            doBehavior(id, isLast ? "dancing" : "eating", isLast ? 4 : 2);
+            effect(id, icon);
+          },
+        ),
       );
       tone();
       if (found === 3) {
@@ -228,7 +229,10 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     closeFood();
     hideGames();
-    if (paused) { setPause(false); return; }
+    if (paused) {
+      setPause(false);
+      return;
+    }
     endMiniGame();
   }
 });
@@ -240,8 +244,10 @@ function stepGameUi(dt) {
     if (!searchResultTime) $("#search-progress").hidden = true;
   }
   for (const [el, remaining] of effects) {
-    if (remaining <= dt) { el.remove(); effects.delete(el); }
-    else effects.set(el, remaining - dt);
+    if (remaining <= dt) {
+      el.remove();
+      effects.delete(el);
+    } else effects.set(el, remaining - dt);
   }
   needsTime += dt;
   if (needsTime >= 15) {
