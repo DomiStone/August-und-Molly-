@@ -1,15 +1,264 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#547247"><title>August & Molly</title><link rel="stylesheet" href="style.css"></head><body>
-<main id="habitat" aria-label="August und Mollys großes Gehege. Tippe auf die Einstreu, um die ausgewählten Meerschweinchen zu rufen.">
-<img class="habitat-background" src="assets/enclosure-large.webp" alt="Großes sonniges Gehege mit Holzhaus, zwei Fenstern, Heu und Weidentunnel">
-<div id="peek-august" class="window-peek" aria-hidden="true"><span></span></div><div id="peek-molly" class="window-peek" aria-hidden="true"><span></span></div>
-<button class="pig selected" id="august" aria-label="August auswählen"><img src="assets/august.png" alt="August"><span class="selected-heart" aria-hidden="true">♥</span></button>
-<button class="pig selected" id="molly" aria-label="Molly auswählen"><img src="assets/molly.png" alt="Molly"><span class="selected-heart" aria-hidden="true">♥</span></button>
-<div id="effects" aria-hidden="true"></div><div id="search-items"></div><div id="reaction" aria-hidden="true"></div>
-<nav class="pet-rail" aria-label="Meerschweinchen auswählen"><button class="portrait selected" id="select-august" aria-label="August auswählen" aria-pressed="true"><img src="assets/august.png" alt=""><span class="mini-needs"><i data-need="august-food"></i><i data-need="august-water"></i><i data-need="august-joy"></i></span></button><button class="portrait selected" id="select-molly" aria-label="Molly auswählen" aria-pressed="true"><img src="assets/molly.png" alt=""><span class="mini-needs"><i data-need="molly-food"></i><i data-need="molly-water"></i><i data-need="molly-joy"></i></span></button><button class="round both" id="both" aria-label="Beide auswählen" aria-pressed="true">🐹🐹</button></nav>
-<div class="top-tools"><button class="round" id="sound" aria-label="Ton einschalten" aria-pressed="false">🔇</button><button class="round" id="pause" aria-label="Pause" aria-pressed="false">⏸</button></div>
-<nav class="action-rail" aria-label="Füttern und versorgen"><div class="food-drawer" id="food-drawer" hidden><button data-food="Gurke" data-icon="🥒" data-value="12" aria-label="Gurke füttern">🥒</button><button data-food="Paprika" data-icon="🫑" data-value="16" aria-label="Paprika füttern">🫑</button><button data-food="Salat" data-icon="🥬" data-value="13" aria-label="Salat füttern">🥬</button><button data-food="Karotte" data-icon="🥕" data-value="9" aria-label="Karotte füttern">🥕</button><button data-food="Heu" data-icon="🌾" data-value="18" aria-label="Heu füttern">🌾</button></div><button class="round big" id="food-menu" aria-label="Gemüse auswählen" aria-expanded="false" aria-controls="food-drawer">🥬<span class="chevron">▴</span></button><button class="round big" id="refill" aria-label="Wasser auffüllen">💧<span class="water-level"><i id="water-fill"></i></span></button></nav>
-<nav class="play-rail" aria-label="Spielen und natürliches Verhalten"><button class="round big" id="home" aria-label="Ins Haus gehen und aus dem Fenster schauen">🏠</button><button class="round big" id="scratch" aria-label="Hinter dem Ohr kratzen">🐾</button><button class="round big" id="cuddle" aria-label="Sanft streicheln">🤚</button><button class="round big" id="popcorn" aria-label="Freudensprünge machen">✨</button><button class="round big" id="games" aria-label="Minispiele auswählen" aria-expanded="false" aria-controls="games-drawer">🎲</button><div id="games-drawer" class="games-drawer" hidden><button class="round big" id="hurdle-game" aria-label="Hüpfspiel starten">🪵<span class="game-badge">↗</span></button><button class="round big" id="dance-game" aria-label="Tanzspiel starten">🎵</button><button class="round big" id="search" aria-label="Gemüse suchen" aria-pressed="false">🔎</button></div></nav>
-<div class="search-progress" id="search-progress" hidden aria-label="Gefundene Leckereien"><span>🥬</span><span>🥒</span><span>🫑</span></div>
-<div id="mini-ui" hidden><div class="mini-top"><div class="mini-stars" aria-label="Gesammelte Sterne"><span>☆</span><span>☆</span><span>☆</span></div><button id="mini-close" class="round" aria-label="Minispiel beenden">✕</button></div><img id="hurdle" src="assets/hurdle.webp" alt="Kleiner Holzstamm zum Darüberhüpfen" hidden><div id="dance-cue" aria-hidden="true" hidden>↔️</div><div class="mini-controls"><button id="jump-now" class="round jump-now" aria-label="Über den Holzstamm springen">⬆️</button><div id="dance-controls" hidden><button class="round" data-dance="wiggle" aria-label="Popo wackeln">↔️</button><button class="round" data-dance="twirl" aria-label="Tanzen">🐾</button><button class="round" data-dance="bounce" aria-label="Hopsen">✨</button></div><button id="mini-again" class="round jump-now" aria-label="Noch einmal spielen" hidden>↻</button></div></div><div class="pause-overlay" id="pause-overlay" hidden><button id="resume" class="round resume" aria-label="Weiterspielen">▶</button></div>
-<p id="message" class="sr-only" role="status" aria-live="polite"></p>
-</main><script src="game.js"></script><script src="movement.js"></script><script src="minigames.js"></script></body></html>
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#547247" />
+    <title>August & Molly</title>
+    <link rel="icon" href="assets/august-walk.webp" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main
+      id="habitat"
+      aria-label="August und Mollys großes Gehege. Tippe auf die Einstreu, um die ausgewählten Meerschweinchen zu rufen."
+    >
+      <img
+        class="habitat-background"
+        src="assets/enclosure-large.webp"
+        alt="Großes sonniges Gehege mit Holzhaus, zwei Fenstern, Heu und Weidentunnel"
+      />
+      <div id="peek-august" class="window-peek" aria-hidden="true">
+        <span></span>
+      </div>
+      <div id="peek-molly" class="window-peek" aria-hidden="true">
+        <span></span>
+      </div>
+      <button class="pig selected" id="august" aria-label="August auswählen">
+        <img src="assets/august.png" alt="August" /><span
+          class="selected-heart"
+          aria-hidden="true"
+          >♥</span
+        >
+      </button>
+      <button class="pig selected" id="molly" aria-label="Molly auswählen">
+        <img src="assets/molly.png" alt="Molly" /><span
+          class="selected-heart"
+          aria-hidden="true"
+          >♥</span
+        >
+      </button>
+      <div id="effects" aria-hidden="true"></div>
+      <div id="food-layer" aria-hidden="true"></div>
+      <div id="search-items"></div>
+      <div id="reaction" aria-hidden="true"></div>
+      <nav class="pet-rail" aria-label="Meerschweinchen auswählen">
+        <button
+          class="portrait selected"
+          id="select-august"
+          aria-label="August auswählen"
+          aria-pressed="true"
+        >
+          <img src="assets/august.png" alt="" /><span class="mini-needs"
+            ><i data-need="august-food"></i><i data-need="august-water"></i
+            ><i data-need="august-joy"></i
+          ></span></button
+        ><button
+          class="portrait selected"
+          id="select-molly"
+          aria-label="Molly auswählen"
+          aria-pressed="true"
+        >
+          <img src="assets/molly.png" alt="" /><span class="mini-needs"
+            ><i data-need="molly-food"></i><i data-need="molly-water"></i
+            ><i data-need="molly-joy"></i
+          ></span></button
+        ><button
+          class="round both"
+          id="both"
+          aria-label="Beide auswählen"
+          aria-pressed="true"
+        >
+          🐹🐹
+        </button>
+      </nav>
+      <div class="top-tools">
+        <button
+          class="round"
+          id="sound"
+          aria-label="Ton einschalten"
+          aria-pressed="false"
+        >
+          🔇</button
+        ><button
+          class="round"
+          id="pause"
+          aria-label="Pause"
+          aria-pressed="false"
+        >
+          ⏸
+        </button>
+      </div>
+      <nav class="action-rail" aria-label="Füttern und versorgen">
+        <div class="food-drawer" id="food-drawer" hidden>
+          <button
+            data-food="Gurke"
+            data-icon="🥒"
+            data-value="12"
+            aria-label="Gurke füttern"
+          >
+            🥒</button
+          ><button
+            data-food="Paprika"
+            data-icon="🫑"
+            data-value="16"
+            aria-label="Paprika füttern"
+          >
+            🫑</button
+          ><button
+            data-food="Salat"
+            data-icon="🥬"
+            data-value="13"
+            aria-label="Salat füttern"
+          >
+            🥬</button
+          ><button
+            data-food="Karotte"
+            data-icon="🥕"
+            data-value="9"
+            aria-label="Karotte füttern"
+          >
+            🥕</button
+          ><button
+            data-food="Heu"
+            data-icon="🌾"
+            data-value="18"
+            aria-label="Heu füttern"
+          >
+            🌾
+          </button>
+        </div>
+        <button
+          class="round big"
+          id="food-menu"
+          aria-label="Gemüse auswählen"
+          aria-expanded="false"
+          aria-controls="food-drawer"
+        >
+          🥬<span class="chevron">▴</span></button
+        ><button class="round big" id="refill" aria-label="Wasser auffüllen">
+          💧<span class="water-level"><i id="water-fill"></i></span>
+        </button>
+      </nav>
+      <nav class="play-rail" aria-label="Spielen und natürliches Verhalten">
+        <button
+          class="round big"
+          id="home"
+          aria-label="Ins Haus gehen und aus dem Fenster schauen"
+        >
+          🏠</button
+        ><button
+          class="round big"
+          id="scratch"
+          aria-label="Hinter dem Ohr kratzen"
+        >
+          🐾</button
+        ><button class="round big" id="cuddle" aria-label="Sanft streicheln">
+          🤚</button
+        ><button
+          class="round big"
+          id="popcorn"
+          aria-label="Freudensprünge machen"
+        >
+          ✨</button
+        ><button
+          class="round big"
+          id="games"
+          aria-label="Minispiele auswählen"
+          aria-expanded="false"
+          aria-controls="games-drawer"
+        >
+          🎲
+        </button>
+        <div id="games-drawer" class="games-drawer" hidden>
+          <button
+            class="round big"
+            id="hurdle-game"
+            aria-label="Hüpfspiel starten"
+          >
+            🪵<span class="game-badge">↗</span></button
+          ><button
+            class="round big"
+            id="dance-game"
+            aria-label="Tanzspiel starten"
+          >
+            🎵</button
+          ><button
+            class="round big"
+            id="search"
+            aria-label="Gemüse suchen"
+            aria-pressed="false"
+          >
+            🔎
+          </button>
+        </div>
+      </nav>
+      <div
+        class="search-progress"
+        id="search-progress"
+        hidden
+        aria-label="Gefundene Leckereien"
+      >
+        <span>🥬</span><span>🥒</span><span>🫑</span>
+      </div>
+      <div id="mini-ui" hidden>
+        <div class="mini-top">
+          <div class="mini-stars" aria-label="Gesammelte Sterne">
+            <span>☆</span><span>☆</span><span>☆</span>
+          </div>
+          <button id="mini-close" class="round" aria-label="Minispiel beenden">
+            ✕
+          </button>
+        </div>
+        <img
+          id="hurdle"
+          src="assets/hurdle.webp"
+          alt="Kleiner Holzstamm zum Darüberhüpfen"
+          hidden
+        />
+        <div id="dance-cue" aria-hidden="true" hidden>↔️</div>
+        <div class="mini-controls">
+          <button
+            id="jump-now"
+            class="round jump-now"
+            aria-label="Über den Holzstamm springen"
+          >
+            ⬆️
+          </button>
+          <div id="dance-controls" hidden>
+            <button class="round" data-dance="wiggle" aria-label="Popo wackeln">
+              ↔️</button
+            ><button class="round" data-dance="twirl" aria-label="Tanzen">
+              🐾</button
+            ><button class="round" data-dance="bounce" aria-label="Hopsen">
+              ✨
+            </button>
+          </div>
+          <button
+            id="mini-again"
+            class="round jump-now"
+            aria-label="Noch einmal spielen"
+            hidden
+          >
+            ↻
+          </button>
+        </div>
+      </div>
+      <div class="pause-overlay" id="pause-overlay" hidden>
+        <button id="resume" class="round resume" aria-label="Weiterspielen">
+          ▶
+        </button>
+      </div>
+      <p id="message" class="sr-only" role="status" aria-live="polite"></p>
+    </main>
+    <script src="game.js"></script>
+    <script src="food-view.js"></script>
+    <script src="feeding.js"></script>
+    <script src="movement.js"></script>
+    <script src="minigames.js"></script>
+    <script src="offline.js"></script>
+  </body>
+</html>
