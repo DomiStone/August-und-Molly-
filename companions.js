@@ -44,7 +44,7 @@ function restoreCompanions() {
     }
     if (Array.isArray(saved.memories)) {
       for (const key of saved.memories)
-        if (Object.hasOwn(MOMENTS, key)) memories.add(key);
+        if (typeof key === "string" && Object.prototype.hasOwnProperty.call(MOMENTS, key)) memories.add(key);
     }
     if (Number.isInteger(saved.ballPlace) && ballPlaces[saved.ballPlace])
       ballPlace = saved.ballPlace;
@@ -81,7 +81,7 @@ function cozyNotice(text) {
 }
 
 function rememberMoment(key) {
-  if (!Object.hasOwn(MOMENTS, key) || memories.has(key)) return;
+  if (!Object.prototype.hasOwnProperty.call(MOMENTS, key) || memories.has(key)) return;
   memories.add(key);
   cozyNotice(memories.size === 3
     ? "🌼 Drei Erinnerungen! Eure Blumen-Girlande wartet im Pflegealbum."
@@ -315,6 +315,10 @@ layoutCompanionObjects();
 refreshCompanionUi();
 update();
 saveCompanions();
+if (!memories.size) {
+  cozyNotice("Tippe auf die Wiese, den Ball oder den Napf. Im 📖 lernt ihr eure Freunde kennen.");
+  noticeClock = 10;
+}
 $("#companion-menu").addEventListener("click", () => {
   if (paused || miniGame) return;
   const open = $("#companion-panel").hidden;

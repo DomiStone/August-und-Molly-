@@ -37,7 +37,7 @@
   text-shadow: 0 2px 4px #575247;
   animation: sleepy-drift 4s ease-in-out infinite;
 }
-.pig.napping .selected-heart { display: none; }
+.pig.napping.selected .selected-heart { display: none; }
 @keyframes sleepy-drift { 50% { transform: translateY(-7px); opacity: .65; } }
 #flower-garland {
   position: absolute;
@@ -71,7 +71,12 @@
   scrollbar-width: thin;
 }
 .cozy-panel header, .companion-heading { display: flex; align-items: center; gap: 12px; }
-.cozy-panel header { justify-content: space-between; }
+.cozy-panel header {
+  justify-content: space-between;
+  position: sticky; top: -20px; z-index: 2;
+  margin: -20px -20px 0; padding: 16px 20px;
+  background: #fffdf4; border-bottom: 1px solid #e8e8d8;
+}
 .cozy-panel h1 { margin: 3px 0 0; font-size: 24px; letter-spacing: -.6px; }
 .cozy-panel h2 { margin: 18px 0 8px; font-size: 17px; }
 .cozy-panel small, .cozy-intro { color: #68735c; line-height: 1.5; font-size: 12px; }
@@ -107,6 +112,7 @@
 .in-minigame #cozy-notice { visibility: hidden; }
 @media (max-width: 700px) {
   .cozy-panel { top: 70px; padding: 16px; }
+  .cozy-panel header { top: -16px; margin: -16px -16px 0; padding: 12px 16px; }
   #cozy-notice { bottom: 160px; font-size: 12px; padding: 8px 12px; }
 }
 @media (max-height: 500px) {
