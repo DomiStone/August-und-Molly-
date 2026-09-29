@@ -108,3 +108,8 @@ Bewusst begrenzt: Fips ist ein begleitendes Jungtier mit vorhandenen verkleinert
 Assets, kein separat auswählbarer dritter Erwachsener. Kein Baueditor oder neue
 Landkarte; Einrichtung wird auf geprüfte Plätze gesetzt. Keine Kamera-/Mikrofon-
 Reaktionen: Geräuschreaktionen werden durch eigene Spielaktionen ausgelöst.
+
+Die ausschließlich für Entwicklung/Tests verwendete Playwright-Abhängigkeit
+wurde von 1.51.1 auf 1.56.1 aktualisiert, nachdem die Testinstallation eine
+Sicherheitswarnung für die alte Version gemeldet hatte. Das ausgelieferte Spiel
+hat weiterhin keine Laufzeit-Abhängigkeiten.
