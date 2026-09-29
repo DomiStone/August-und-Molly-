@@ -403,7 +403,7 @@ window.addEventListener("pagehide", saveCompanions);
 window.addEventListener("resize", () => {
   // Keep the same owned action and elapsed time, including during pause.
   for (const action of companionActions.values()) {
-    if (action.kind === "napping") continue;
+    if (action.kind === "napping" || action.phase === "waiting") continue;
     Object.assign(action.target, activityDestination(action.id, action.kind));
     const w = walkers[action.id];
     if (action.phase === "approaching") {
