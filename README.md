@@ -14,8 +14,8 @@ Ein Meerschweinchen-Spiel für Kinder – mit August und Molly, Füttern, Wasser
 - Hüpfspiel, Tanzspiel mit Popowackeln und Gemüse-Suche
 - Sterne sammeln ohne Zeitdruck; Pausen- und Tonknopf
 - August ist neugierig und liebt Karotte, Molly ist gemütlich und liebt Gurke
-- Ruhige Nickerchen mit Atmung, Trinken am Napf und ein benutzbarer Weidenball
-- Pflegealbum mit sieben einmaligen Erinnerungsstickern und einer Blumen-Girlande
+- Ruhige Nickerchen, Schlafen im Haus, echte Trinkflasche und ein benutzbarer Weidenball
+- Pflegealbum mit elf einmaligen Erinnerungsstickern und einer Blumen-Girlande
 - Ball an drei Plätze stellen, Tiere herbeirufen und verständliche Stimmungsanzeigen
 
 ## Lokal starten
@@ -58,7 +58,7 @@ während der Abwesenheit. Energie beeinflusst Nickerchen, Vorlieben geben beim
 vollständigen Auffressen einen kleinen Freudebonus. Alle Futtersorten und Spiele
 bleiben von Anfang an frei zugänglich.
 
-Der Weidenball und der Wassernapf im Gehege sind antippbar. Die Tiere gehen hin
+Der Weidenball und die Trinkflasche im Gehege sind antippbar. Die Tiere gehen hin
 und beschäftigen sich damit; wiederholte Eingaben erzeugen keine parallelen
 Aktionen für dasselbe Tier. Dösen, Spielen und Trinken lassen sich durch andere
 Aktionen abbrechen und werden mit dem gesamten Spiel pausiert. Zufällige
@@ -72,9 +72,49 @@ Beschädigte Daten führen zu sicheren Standardwerten, gesperrter Speicher verhi
 das Spielen nicht. Die App zeigt dann einen Hinweis im Album. Löschen der
 Browserdaten entfernt den Spielstand. Es gibt keine Cloud-Synchronisierung.
 
-Für eine neue Offline-Version alle Spiel-Tabs schließen und wieder öffnen:
-Der Service Worker aktiviert ein vollständig geladenes Update beim nächsten Start,
-statt mitten in einer laufenden Spielsitzung Dateien auszutauschen.
+Eine vollständig heruntergeladene neue Version wird im 📖 mit **Neue Version
+laden** angeboten. Erst nach Antippen wird gespeichert, pausiert und neu geladen.
+Alternativ alle Spiel-Tabs schließen und wieder öffnen. Ein noch alter Stand ohne
+diesen Knopf muss zunächst online geöffnet werden, um das Update herunterzuladen.
+
+## Eine kleine lebendige Welt
+
+`world.js` ergänzt Vorräte und soziale Aktivitäten im bestehenden Spieltakt:
+
+- Durst führt zur Trinköffnung. Die Tiere trinken nacheinander; ihre Versorgung
+  steigt Schluck für Schluck, während der sichtbare Flascheninhalt sinkt. 💧 füllt
+  nur die Flasche auf, nicht mehr auf magische Weise die Bedürfnisse.
+- Hunger führt zu einer sichtbaren Portion aus der Heuraufe. Vorrat wird für
+  angefangene Portionen reserviert und pro Biss verbraucht. Ein Abbruch gibt den
+  unbenutzten Teil wieder frei. Im 📖 lässt sich Heu nachfüllen.
+- Müde Tiere gehen in das bestehende Haus, schlafen mit Traumzeichen am eigenen
+  Lieblingsfenster, gewinnen Energie, schauen heraus und verlassen das Haus.
+  Das freie Dösen und der bisherige Hausbesuch bleiben zusätzlich verfügbar.
+- Tiere begrüßen sich, folgen einander bei gemeinsamen Erkundungen, flitzen
+  gelegentlich und untersuchen versetztes Spielzeug. Ein Eingriff des Spielers
+  löst die gemeinsame Aktion sauber auf, ohne den Partner zu blockieren.
+- Langsam entstehen höchstens sechs kleine Köttel-Häufchen. Antippen entfernt
+  einzelne; **Frische Einstreu** reinigt zusammen. Reinigung hebt die Freude,
+  ohne Strafsystem oder fortlaufende Pflicht. Drei Farbvarianten und zwei
+  Tunnelplätze gestalten das vorhandene Gehege, nicht eine neue Karte.
+- Ein Spieltag beginnt bei der lokalen Tageszeit und dauert etwa zwölf aktive
+  Spielminuten. Sanfte Lichtstimmung und Ruhe-Wahrscheinlichkeiten ändern sich;
+  die Zeit steht während Pause/Abwesenheit still. Kein biologisch exaktes Modell.
+- Nach drei Album-Stickern kann **Fips** einziehen: genau ein Jungtier, das
+  Erwachsenen folgt, ihre Fress-/Ruheaktionen imitiert und auf Begrüßung reagiert.
+  Fips nutzt verkleinerte vorhandene Grafiken und ist bewusst kein drittes separat
+  zu verwaltendes Tier. Seine Pflege gehört zur Familie; keine Fortpflanzung.
+
+Der benutzbare Gehege-Tunnel ist vom neuen Minispiel **Tunnelpfade** getrennt.
+`tunnel-game.js` erzeugt verbundene 3×3-Labyrinthe mit garantiert erreichbarem
+Gemüseziel. Offene Nachbarräume antippen, zurückgehen oder neu spielen – ohne
+Zeitdruck. Der vorhandene Hüpfparcours hat jetzt deutlich niedrigere Sprünge.
+
+Spielstand-Schema 2 übernimmt bestehende Schema-1-Spielstände. Gespeichert werden
+zusätzlich Vorräte, Schmutz, Spielzeit, Einrichtung und die einmalige Adoption;
+nie aktive Aktionen oder Callback-Funktionen. Gerätespeicher kann weiterhin
+gesperrt sein, ohne das Spiel zu verhindern. Sämtliche Sounds werden lokal
+synthetisiert und sind standardmäßig aus; keine Audio-Downloads oder SDKs.
 
 ## Tests
 

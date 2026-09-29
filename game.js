@@ -44,10 +44,12 @@ function tone(kind = "happy") {
       const o = audioContext.createOscillator(),
         g = audioContext.createGain();
       const notes = { water: [510, 430, 350], sleepy: [330, 294, 262],
-        curious: [520, 660, 590], favorite: [660, 880, 990] };
+        curious: [520, 660, 590], favorite: [660, 880, 990],
+        clean: [440, 660, 880], rustle: [210, 260, 190], nibble: [300, 340, 280] };
+      if (kind === "rustle" || kind === "nibble") o.type = "triangle";
       o.frequency.value = (notes[kind] || [700, 840, 980])[i];
       g.gain.setValueAtTime(0, time + d);
-      g.gain.linearRampToValueAtTime(0.045, time + d + 0.02);
+      g.gain.linearRampToValueAtTime(kind === "rustle" || kind === "nibble" ? 0.012 : 0.035, time + d + 0.02);
       g.gain.exponentialRampToValueAtTime(0.001, time + d + 0.17);
       o.connect(g);
       g.connect(audioContext.destination);
@@ -107,7 +109,7 @@ $$("[data-food]").forEach((b) =>
 $("#refill").addEventListener("click", () => {
   if (paused) return;
   water = 100;
-  Object.values(pets).forEach((p) => (p.water = 100));
+  if (typeof refreshWorldUi === "function") refreshWorldUi();
   react("💧💙");
   tone("water");
   update();
@@ -155,6 +157,7 @@ $("#search").addEventListener("click", () => {
   }
   closeFood();
   cancelAllFeeding();
+  if (typeof cancelAllWorldActions === "function") cancelAllWorldActions();
   if (typeof cancelAllCompanionActions === "function") cancelAllCompanionActions();
   searchActive = true;
   found = 0;
@@ -239,7 +242,7 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     closeFood();
     hideGames();
-    if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
+    if (typeof closeCompanionPanel === "function") closeCompanionPanel();
     if (paused) {
       setPause(false);
       return;
@@ -268,7 +271,6 @@ function stepGameUi(dt) {
       p.water = Math.max(35, p.water - 0.4);
       p.joy = Math.max(40, p.joy - 0.4);
     }
-    water = Math.max(10, water - 0.5);
     update();
   }
 }

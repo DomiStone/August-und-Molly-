@@ -13,6 +13,7 @@ const types = {
   ".webp": "image/webp",
   ".png": "image/png",
 };
+let workerRevision = 0;
 const server = http.createServer((req, res) => {
   const pathname = decodeURIComponent(
     new URL(req.url, "http://localhost").pathname,
@@ -28,6 +29,10 @@ const server = http.createServer((req, res) => {
   }
   res.setHeader("Content-Type", types[path.extname(file)] || "text/plain");
   res.setHeader("Cache-Control", "no-cache");
+  if (pathname === "/sw.js" && workerRevision) {
+    res.end(fs.readFileSync(file, "utf8").replace("august-molly-living-v3", "august-molly-living-v3-test-update"));
+    return;
+  }
   fs.createReadStream(file).pipe(res);
 });
 const report = [];
@@ -349,9 +354,101 @@ let browser, page;
   assert.equal(await page.locator("#flower-garland").isVisible(),true);
   await page.screenshot({path:path.join(results,"cozy-album.png")});
   await click("companion-close");
-  const durable = await state('JSON.parse(localStorage.getItem(COMPANION_SAVE_KEY))');
+  let durable = await state('JSON.parse(localStorage.getItem(COMPANION_SAVE_KEY))');
   assert.ok(durable.memories.includes('favorite'));
   pass("personalities, naps, pause, drinking, toy/repeat/cancel, recall, rearrangement and album rewards");
+  // Fixture only establishes a need; the real movement/rAF decision path must
+  // discover and consume resources without invoking its completion callbacks.
+  const resetActors = async () => state(`endMiniGame();stopSearch();cancelAllFeeding();cancelAllCompanionActions();cancelAllWorldActions();
+    world.socialClock=999;world.minutes=720;
+    for(const [id,p] of Object.entries(pets)){p.food=95;p.water=95;p.energy=90;p.enrichment=90;sendPet(id,id==='august'?30:76,68);walkers[id].nextNatural=simulationTime+999;}`);
+  await resetActors();
+  await state('water=70;pets.august.water=40;pets.molly.water=40;walkers.august.nextNatural=0;walkers.molly.nextNatural=0');
+  await tick(26000);
+  assert.ok(await state('pets.august.water>68 && pets.molly.water>68 && water<59 && water>55'));
+  const thirstBeforeRefill = await state('pets.august.water');
+  await click('refill');
+  assert.equal(await state('pets.august.water'),thirstBeforeRefill);
+  await resetActors();
+  await state('world.hay=100;pets.august.food=40;walkers.august.nextNatural=0');
+  await tick(23000);
+  assert.ok(await state('pets.august.food>55 && world.hay===92'));
+  await click('companion-menu'); await click('refill-hay');
+  assert.equal(await state('world.hay'),100);
+  await click('house-sleep');
+  const houseSleepModes = new Set();
+  for(let i=0;i<15 && !await state('walkers.august.mode==="house-sleep"');i++) { await tick(1000); houseSleepModes.add(await state('walkers.august.mode')); }
+  assert.equal(await state('walkers.august.mode'),'house-sleep');
+  await page.screenshot({path:path.join(results,'world-house-sleep.png')});
+  const sleepTimer = await state('walkers.august.timer');
+  await click('pause'); await tick(4000);
+  assert.equal(await state('walkers.august.timer'),sleepTimer);
+  await click('resume');
+  for(let i=0;i<35;i++){await tick(1000);houseSleepModes.add(await state('walkers.august.mode'));}
+  assert.ok(houseSleepModes.has('peeking') && houseSleepModes.has('exiting') && houseSleepModes.has('walk'));
+  pass('autonomous thirst→bottle→real water use, hunger→reserved hay bites, house sleep→pause→wake→exit');
+  await resetActors();
+  await state('cleanEnclosure();addLitter(35,58);addLitter(47,67);addLitter(66,75)');
+  const dirty = await state('world.dirt.size');
+  await page.locator('.litter').first().click();
+  assert.equal(await state('world.dirt.size'),dirty-1);
+  await click('companion-menu'); await click('clean-enclosure');
+  assert.equal(await state('world.dirt.size'),0);
+  assert.equal(await state('memories.has("clean")'),true);
+  await click('companion-menu');await click('together');
+  await tick(2200);
+  assert.equal(await state('world.actions.size'),2);
+  await page.screenshot({path:path.join(results,'world-friends.png')});
+  await tick(6500);
+  assert.equal(await state('memories.has("friends")'),true);
+  await click('world-tunnel');
+  let insideTunnel=false;
+  for(let i=0;i<35;i++){await tick(400);if(await state('walkers.august.mode==="in-tunnel"'))insideTunnel=true;}
+  assert.equal(insideTunnel,true);
+  assert.equal(await state('[...world.actions.values()].some(a=>a.kind==="tunnel")'),false);
+  await click('companion-menu');await click('adopt-baby');
+  assert.equal(await page.locator('#baby').isVisible(),true);
+  await click('baby');
+  await click('companion-menu');
+  assert.equal(await page.locator('#adopt-baby').isEnabled(),false);
+  assert.equal(await page.locator('#baby').count(),1);
+  await click('bedding-style');
+  await click('move-tunnel');
+  await tick(5000);
+  await page.screenshot({path:path.join(results,'world-family.png')});
+  pass('click cleaning, fresh bedding, social following, usable tunnel, rearrangement and one adopted baby');
+  const solveMaze = async (pauseOnFirst = false) => {
+    const maze = await state('miniGame.maze');
+    const queue=[[0]],seen=new Set([0]);let route;
+    while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===8){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+    assert.ok(route);
+    for(const [index,cell] of route.slice(1).entries()){
+      await page.locator(`[data-cell="${cell}"]`).click();
+      if(pauseOnFirst && index===0){await tick(200);await click('pause');const t=await state('miniGame.timer');await tick(2000);assert.equal(await state('miniGame.timer'),t);await click('resume');}
+      await tick(800);
+    }
+    assert.equal(await state('miniGame.phase'),'won');
+    assert.equal(await state('miniGame.score'),3);
+  };
+  await click('companion-menu');await click('tunnel-game');
+  assert.equal(await state('feedings.size+companionActions.size+world.actions.size'),0);
+  await page.screenshot({path:path.join(results,'world-tunnel-game.png')});
+  await solveMaze(true);
+  await click('mini-again');await solveMaze();await click('mini-close');
+  pass('randomized connected tunnel maze, real UI solution, pause, reward and replay');
+  await resetActors();
+  await state('world.socialClock=10;world.dirtClock=4;walkers.august.nextNatural=simulationTime+4;walkers.molly.nextNatural=simulationTime+8');
+  const idleModes=new Set();
+  for(let i=0;i<120;i++){
+    await tick(1000);
+    for(const mode of await state('Object.values(walkers).map(w=>w.mode)'))idleModes.add(mode);
+    assert.ok(await state('Object.values(walkers).every(w=>Number.isFinite(w.x)&&Number.isFinite(w.y))'));
+  }
+  assert.ok(idleModes.size>=3,JSON.stringify([...idleModes]));
+  assert.equal(await page.locator('.food-object').count(),await state('feedings.size'));
+  assert.ok(await state('world.dirt.size<=6'));
+  await page.screenshot({path:path.join(results,'world-idle-two-minutes.png')});
+  pass('two unattended simulated minutes: varied live states, bounded litter and no orphan portions');
   for (const size of [
     { width: 1024, height: 600 },
     { width: 600, height: 1024 },
@@ -403,16 +500,26 @@ let browser, page;
     await page.screenshot({path:path.join(results,`album-${size.width}x${size.height}.png`)});
     await page.keyboard.press("Escape");
     assert.equal(await page.locator("#companion-panel").isVisible(),false);
+    await click('companion-menu');await click('tunnel-game');
+    const puzzleBox=await page.locator('#tunnel-puzzle').boundingBox();
+    assert.ok(puzzleBox.x>=0 && puzzleBox.y>=0 && puzzleBox.x+puzzleBox.width<=size.width && puzzleBox.y+puzzleBox.height<=size.height);
+    await page.screenshot({path:path.join(results,`tunnel-${size.width}x${size.height}.png`)});
+    await click('mini-close');
   }
   pass(
     "responsive controls, feeding and minigames at 1024x600, 600x1024, 800x480, 360x640",
   );
   await page.evaluate(() => navigator.serviceWorker.ready);
+  await state('saveCompanions()');
+  durable=await state('JSON.parse(localStorage.getItem(COMPANION_SAVE_KEY))');
   await page.reload();
   assert.equal(await state('flowers'),durable.flowers);
   assert.equal(await state('ballPlace'),durable.ballPlace);
   assert.deepEqual(await state('[...memories].sort()'),durable.memories.sort());
   assert.equal(await state('companionActions.size'),0);
+  assert.equal(await state('world.baby'),true);
+  assert.equal(await state('world.hay'),durable.world.hay);
+  assert.equal(await state('world.actions.size'),0);
   pass("local save survives reload without restoring in-flight activities or offline need decay");
   for (const seed of ["{broken", JSON.stringify({version:1,pets:{august:{food:-400,energy:900}},memories:["__proto__","rest"],ballPlace:999})]) {
     const probe = await browser.newContext();
@@ -446,6 +553,29 @@ let browser, page;
   await page.locator('[data-food="Heu"]').click();
   assert.ok((await state("feedings.size")) > 0);
   pass("offline reload and gameplay from same-origin cache");
+  await ctx.setOffline(false);
+  // Exercise the update handshake rather than forcing a reload mid-session.
+  workerRevision=1;
+  await page.evaluate(async()=>{
+    const registration=await navigator.serviceWorker.getRegistration();
+    await registration.update();
+    if(registration.waiting)return;
+    await new Promise(resolve=>{
+      const watch=()=>{
+        const worker=registration.installing;
+        if(!worker)return;
+        if(worker.state==='installed'){resolve();return;}
+        worker.addEventListener('statechange',()=>{if(worker.state==='installed')resolve();});
+      };
+      registration.addEventListener('updatefound',watch);watch();
+    });
+  });
+  await click('companion-menu');
+  await page.locator('#update-game').waitFor({state:'visible'});
+  await Promise.all([page.waitForEvent('load'),click('update-game')]);
+  assert.equal(await state('world.baby'),true);
+  assert.equal(await state('feedings.size'),0);
+  pass('explicit offline-version update preserves saved family and never restores in-flight actions');
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   pass(

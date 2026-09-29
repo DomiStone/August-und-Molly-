@@ -22,6 +22,7 @@ function starDisplay(score) {
 }
 function endMiniGame() {
   if (!miniGame) return;
+  if (typeof closeTunnelPuzzle === "function") closeTunnelPuzzle();
   miniGame = null;
   $("#mini-ui").hidden = true;
   document.body.classList.remove("in-minigame");
@@ -32,6 +33,7 @@ function endMiniGame() {
 }
 function startMiniGame(type) {
   if (paused) return;
+  if (typeof cancelAllWorldActions === "function") cancelAllWorldActions();
   if (typeof cancelAllCompanionActions === "function") cancelAllCompanionActions();
   if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   cancelAllFeeding();
@@ -57,6 +59,7 @@ function startMiniGame(type) {
   $("#dance-cue").hidden = type !== "dance";
   $("#mini-again").hidden = true;
   starDisplay(0);
+  if (type === "tunnel") { prepareTunnelPuzzle(); return; }
   if (type === "jump") prepareJump();
   else {
     for (const [id, w] of Object.entries(walkers)) {
@@ -106,6 +109,7 @@ function winMiniGame() {
     doBehavior(id, "dancing", 6);
     walkers[id].danceKind = "wiggle";
     pets[id].joy = 100;
+    if (pets[id].enrichment !== undefined) pets[id].enrichment = 100;
     effect(id, "🌟");
   }
   update();
@@ -158,6 +162,7 @@ $$("[data-dance]").forEach((b) =>
 function stepMiniGame(dt) {
   const g = miniGame;
   if (!g) return;
+  if (g.type === "tunnel") { stepTunnelPuzzle(dt); return; }
   g.lock = Math.max(0, g.lock - dt);
   if (g.type === "jump" && g.phase === "jumping") {
     g.timer += dt;
@@ -168,7 +173,7 @@ function stepMiniGame(dt) {
     w.gait += dt * 14;
     w.el.style.setProperty(
       "--jump-y",
-      -Math.sin(Math.PI * t) * Math.min(140, Math.max(75, innerHeight * 0.18)) +
+      -Math.sin(Math.PI * t) * Math.min(45, Math.max(20, innerHeight * 0.055)) +
         "px",
     );
     if (t >= 1) {
