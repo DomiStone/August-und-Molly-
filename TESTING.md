@@ -84,6 +84,10 @@ Flaschenmenge sank ohne Trinken. Alte Spielstände konnten keine leeren Vorräte
 behalten (untere Bedürfnisgrenze wurde auch auf Wasser angewendet). Der bisherige
 Offline-Wechsel hatte keine sichtbare, sichere Aktualisierungsaktion. Der
 Hüpfparcours hatte für Meerschweinchen übertrieben große Sprunghöhen.
+Die erste Bildprüfung zeigte sich überlagernde Köpfe an der Trinköffnung:
+Ein wartendes Tier bleibt jetzt mit Abstand und rückt erst nach Freigabe nach.
+Abbruch des ersten Trinkers gibt die Warteschlange ebenfalls frei; natürliche
+Zielwechsel dürfen wartende Versorgungsaktionen nicht versehentlich abbrechen.
 
 Neue Zustands- und Browserprüfungen:
 

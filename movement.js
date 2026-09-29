@@ -304,7 +304,8 @@ function stepMovement(dt) {
     if (w.wait > 0) {
       w.wait = Math.max(0, w.wait - dt);
       renderWalker(w, false);
-      if (w.wait === 0 && !(typeof worldBusy === "function" && worldBusy(w.id))) {
+      if (w.wait === 0 && !(typeof worldBusy === "function" && worldBusy(w.id))
+        && !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id))) {
         const next = w.nextNatural;
         chooseDestination(w);
         w.nextNatural = next;

@@ -224,6 +224,12 @@ function startCompanionAction(id, kind) {
   if (paused || miniGame || searchActive || !["napping", "playing", "drinking"].includes(kind)) return;
   if (companionActions.get(id)?.kind === kind) return;
   if (kind === "drinking" && water <= 0) { cozyNotice("Die Tränke ist leer. Mit 💧 wieder auffüllen."); return; }
+  if (kind === "drinking" && [...companionActions.values()].some(a => a.id !== id && a.kind === "drinking")) {
+    // Wait away from the nozzle, not with two overlapping faces at one opening.
+    sendPet(id, id === "august" ? 32 : 43, 76);
+    companionActions.set(id, { id, kind, phase: "waiting", elapsed: 0, duration: 5 });
+    return;
+  }
   const target = activityDestination(id, kind);
   sendPet(id, target.x, target.y, () => {
     const action = companionActions.get(id);
@@ -247,6 +253,7 @@ function finishCompanionAction(action) {
   cancelCompanionAction(id);
   if (kind === "drinking") {
     effect(id, "💧");
+    sendPet(id, id === "august" ? 43 : 80, 73);
   } else {
     if (kind === "playing") pets[id].enrichment = Math.min(100, pets[id].enrichment + 20);
     pets[id].joy = Math.min(100, pets[id].joy + (kind === "playing" ? 12 : 5));
@@ -306,6 +313,14 @@ function stepCompanions(dt) {
   }
   let playing = false;
   for (const action of companionActions.values()) {
+    if (action.phase === "waiting") {
+      const first = [...companionActions.values()].find(a => a.kind === "drinking");
+      if (first === action) {
+        companionActions.delete(action.id);
+        startCompanionAction(action.id, "drinking");
+      }
+      continue;
+    }
     if (action.phase !== "active") continue;
     if (action.kind === "drinking" && typeof canDrink === "function" && !canDrink(action)) continue;
     action.elapsed += dt;

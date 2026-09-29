@@ -234,7 +234,7 @@ assert.equal(run("companionActions.size"), 2);
 step(25);
 assert.ok(run("memories.has('ball')"));
 run("useCompanionActivity('drinking');pets.august.water=45;pets.molly.water=45");
-step(25);
+step(35);
 assert.ok(run("pets.august.water") > 70);
 assert.ok(run("pets.molly.water") > 70);
 for (const code of ["sendPet('august',30,60)", "doBehavior('august','scratching')", "startFeeding(['august'],'Heu')", "startMiniGame('dance')"]) {
@@ -264,10 +264,16 @@ assert.equal(run("walkers.august.sleepRequested"), true);
 console.log("PASS: companion activities, pause, cancellation, favorites, unique memories, bounded storage restore and blocked/corrupt storage.");
 
 run("cancelAllWorldActions();cancelAllCompanionActions();cancelAllFeeding();world.minutes=720;world.socialClock=99999;water=80;pets.august.water=40;pets.molly.water=45;useCompanionActivity('drinking')");
-step(26);
+assert.equal(run("companionActions.get('molly').phase"),'waiting');
+assert.ok(run("walkers.molly.tx") < 50, 'second drinker waits away from nozzle');
+step(36);
 assert.ok(run("pets.august.water") > 68);
 assert.ok(run("pets.molly.water") > 73);
 assert.ok(run("water") < 69 && run("water") > 66);
+run("cancelAllCompanionActions();water=20;pets.molly.water=40;useCompanionActivity('drinking');cancelCompanionAction('august')");
+step(25);
+assert.ok(run("pets.molly.water") > 68, 'canceled first drinker must release the queue');
+assert.equal(run("[...companionActions.values()].some(a=>a.kind==='drinking')"),false);
 run("water=0;cancelAllCompanionActions();startCompanionAction('august','drinking')");
 assert.equal(run("companionActions.has('august')"),false);
 const thirst = run("pets.august.water");
