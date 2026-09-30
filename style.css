@@ -29,7 +29,7 @@
   transform: translateY(var(--cozy-motion, 0px)) rotate(1deg);
 }
 .pig.drinking > img {
-  transform-origin: 75% 65%;
+  transform-origin: 50% 65%;
   transform: translateY(var(--cozy-motion, 0px)) rotate(var(--drink-nod, 0deg));
 }
 #drink-bowl.being-used::after {
