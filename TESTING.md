@@ -113,3 +113,13 @@ Die ausschließlich für Entwicklung/Tests verwendete Playwright-Abhängigkeit
 wurde von 1.51.1 auf 1.56.1 aktualisiert, nachdem die Testinstallation eine
 Sicherheitswarnung für die alte Version gemeldet hatte. Das ausgelieferte Spiel
 hat weiterhin keine Laufzeit-Abhängigkeiten.
+
+
+## Randplätze und Labyrinth-Update
+- Trinkflasche rechts, beide Maulpositionen von innen erreichbar; Trinknicken,
+  Warteschlange, Pause und Drehung des Bildschirms.
+- Tunnel am Rand: mehrfaches Tippen, Pausieren auf dem Hinweg, Abbrechen und
+  gemeinsamer Labyrinthstart ohne übrig gebliebene Aktionen.
+- 16 erreichbare Felder, geänderter Lösungsweg in jeder Runde, Sackgassen und
+  Zurückgehen, tatsächliches Lösen über die Oberfläche, zwei sichtbare Tiere.
+- Versionierte Dateien und Offline-Neustart/Update weiter im Browsertest.

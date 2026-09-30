@@ -105,8 +105,10 @@ diesen Knopf muss zunächst online geöffnet werden, um das Update herunterzulad
   Fips nutzt verkleinerte vorhandene Grafiken und ist bewusst kein drittes separat
   zu verwaltendes Tier. Seine Pflege gehört zur Familie; keine Fortpflanzung.
 
-Der benutzbare Gehege-Tunnel ist vom neuen Minispiel **Tunnelpfade** getrennt.
-`tunnel-game.js` erzeugt verbundene 3×3-Labyrinthe mit garantiert erreichbarem
+Der Spieltunnel steht am Gehegerand. Antippen schickt die gewählten Tiere zur
+Öffnung und startet **Tunnelpfade**. Bei beiden ausgewählten Tieren laufen beide
+zusammen durch die Räume. Selbstständiges Erkunden öffnet kein Minispiel.
+`tunnel-game.js` erzeugt verbundene 4×4-Labyrinthe mit garantiert erreichbarem
 Gemüseziel. Offene Nachbarräume antippen, zurückgehen oder neu spielen – ohne
 Zeitdruck. Der vorhandene Hüpfparcours hat jetzt deutlich niedrigere Sprünge.
 
@@ -133,3 +135,15 @@ Branches und Pull Requests aus. Browserbilder und das Ergebnisprotokoll liegen
 im jeweiligen Lauf unter `browser-test-results`. Getestete Bildschirmgrößen:
 1024×600, 600×1024, 800×480 und 360×640. Dies ersetzt keinen Test auf einem
 physischen Fire-Tablet.
+
+
+### Labyrinth-Update
+Die Trinkflasche steht ganz rechts. Beide Tiere erreichen die Öffnung von links,
+trinken nacheinander und zeigen ruhige Nickbewegungen; kleine Blasen steigen auf.
+Der Tunnel bleibt auch beim Umstellen an einem Randplatz. Jeder neue Start und
+jede Wiederholung erhält einen anderen Lösungsweg. Nach zwölf erfolglosen
+Zufallsversuchen sorgt ein begrenzter Ersatzgenerator für einen anderen Weg.
+
+Direkter aktualisierter Start: `index.html?v=edge-maze-v4`. HTML, CSS und Skripte
+verwenden dieselbe Versionskennung, damit ältere Offline-Worker beim Öffnen
+dieses Links keine veralteten Skripte dazumischen. Spielstände werden erhalten.
