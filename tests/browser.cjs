@@ -448,6 +448,12 @@ let browser, page;
   };
   await click('companion-menu');await click('tunnel-game');
   assert.equal(await state('feedings.size+companionActions.size+world.actions.size'),0);
+  for (const id of ['tunnel-token','tunnel-buddy']) {
+    const token=page.locator('#'+id);
+    const box=await token.boundingBox();
+    assert.ok(box && box.width>15 && box.height>15, id+' must be visible in the maze');
+    assert.ok(await token.evaluate(e=>e.complete && e.naturalWidth>0));
+  }
   await page.screenshot({path:path.join(results,'world-tunnel-game.png')});
   await solveMaze(true);
   const firstRoute=await state('mazeSolution(miniGame.maze)');

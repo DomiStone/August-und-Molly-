@@ -129,7 +129,7 @@ function positionTunnelToken(from, to, progress) {
   if (!g?.token) return;
   for (const [token, delay] of [[g.token, 0], [g.buddy, 0.18]]) {
     if (!token) continue;
-    const t = progress === 1 ? 1 : Math.max(0, progress - delay);
+    const t = Math.max(0, (progress - delay) / (1 - delay));
     const x = from % MAZE_SIZE + ((to % MAZE_SIZE) - (from % MAZE_SIZE)) * t;
     const y = Math.floor(from / MAZE_SIZE) + (Math.floor(to / MAZE_SIZE) - Math.floor(from / MAZE_SIZE)) * t;
     token.style.left = (x + (delay ? 0.3 : 0.62)) * 100 / MAZE_SIZE + "%";
