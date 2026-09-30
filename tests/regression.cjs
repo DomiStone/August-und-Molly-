@@ -319,16 +319,20 @@ el('#adopt-baby').click();el('#adopt-baby').click();
 assert.equal(run("world.baby"),true);
 step(3);
 assert.ok(run("Number.isFinite(baby.x) && Number.isFinite(baby.y)"));
+let lastRoute;
 for(let trial=0;trial<30;trial++){
   const maze=JSON.parse(run("JSON.stringify(makeTunnelMaze())"));
   const visited=new Set([0]), queue=[0];
   while(queue.length)for(const neighbor of maze[queue.shift()])if(!visited.has(neighbor)){visited.add(neighbor);queue.push(neighbor);}
-  assert.equal(visited.size,9);
+  assert.equal(visited.size,16);
+  const routeKey=run("previousMazeRoute");
+  assert.notEqual(routeKey,lastRoute);
+  lastRoute=routeKey;
 }
 run("startMiniGame('tunnel')");
 const maze=JSON.parse(run("JSON.stringify(miniGame.maze)"));
 const queue=[[0]], seen=new Set([0]);let route;
-while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===8){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===15){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
 for(const cell of route.slice(1)){run(`moveThroughMaze(${cell})`);step(.8);}
 assert.equal(run("miniGame.phase"),'won');
 assert.equal(run("miniGame.score"),3);
@@ -338,3 +342,14 @@ assert.equal(run("world.hay"),0);
 assert.ok(run("world.dirt.size")<=6);
 assert.equal(run("world.bedding"),2);
 console.log("PASS: thirst/resource chain, serialized bottle, empty/refill, reserved hay bites/cancel, house sleep/wake, social ownership, tunnel, cleaning/pause, one baby, 30 solvable mazes and save validation.");
+
+run("endMiniGame();selected=['august','molly'];startTunnelAdventure();startTunnelAdventure()");
+assert.equal(run("world.actions.size"),2);
+run("setPause(true)");step(20);
+assert.equal(run("miniGame"),null);
+run("setPause(false)");step(25);
+assert.equal(run("miniGame.type"),'tunnel');
+assert.equal(run("miniGame.ids.length"),2);
+run("endMiniGame();startTunnelAdventure();sendPet('august',30,60)");step(20);
+assert.equal(run("miniGame"),null,'canceled entrance must not open a game later');
+console.log('PASS: changed maze solution every round, paused entrance, two-pet tunnel launch, cancellation.');

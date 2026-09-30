@@ -22,7 +22,7 @@ const MOMENTS = {
 };
 const companionActions = new Map();
 const ballPlaces = [{ x: 46, y: 76 }, { x: 33, y: 52 }, { x: 65, y: 55 }];
-const bowlPlace = { x: 70, y: 57 };
+const bowlPlace = { x: 93, y: 57 };
 const memories = new Set();
 let ballPlace = 0, flowers = false, storageAvailable = true;
 let companionUiClock = 0, companionSaveClock = 0, noticeClock = 0;
@@ -191,6 +191,7 @@ function cancelCompanionAction(id) {
   w.arrival = null;
   w.el.classList.remove("napping", "playing", "drinking");
   w.el.style.removeProperty("--cozy-motion");
+  w.el.style.removeProperty("--drink-nod");
   w.mode = "sniff";
   w.wait = 3;
   w.nextNatural = simulationTime + 30 + Math.random() * 20;
@@ -246,6 +247,7 @@ function startCompanionAction(id, kind) {
     tone(kind === "napping" ? "sleepy" : kind === "drinking" ? "water" : "curious");
   });
   companionActions.set(id, { id, kind, target, phase: "approaching", elapsed: 0, duration: kind === "napping" ? 16 : 5 });
+  if (kind === "drinking") walkers[id].tx = target.x;
 }
 
 function finishCompanionAction(action) {
@@ -329,6 +331,7 @@ function stepCompanions(dt) {
     if (action.kind === "napping") pets[action.id].energy = Math.min(100, pets[action.id].energy + dt * 2);
     if (action.kind === "playing") playing = true;
     if (action.kind === "drinking") {
+      w.el.style.setProperty("--drink-nod", `${Math.sin(action.elapsed * 5) * 1.1}deg`);
       const sip = Math.min(water, dt * 1.2);
       water = Math.max(0, water - sip);
       pets[action.id].water = Math.min(100, pets[action.id].water + sip * 5);
@@ -337,6 +340,7 @@ function stepCompanions(dt) {
     if (action.elapsed >= action.duration) finishCompanionAction(action);
   }
   $("#willow-ball").classList.toggle("being-played", playing);
+  $("#drink-bowl").classList.toggle("being-used", [...companionActions.values()].some(a => a.kind === "drinking" && a.phase === "active"));
   noticeClock = Math.max(0, noticeClock - dt);
   if (!noticeClock) $("#cozy-notice").hidden = true;
   companionUiClock += dt;

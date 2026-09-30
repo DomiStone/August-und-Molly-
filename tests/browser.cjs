@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", types[path.extname(file)] || "text/plain");
   res.setHeader("Cache-Control", "no-cache");
   if (pathname === "/sw.js" && workerRevision) {
-    res.end(fs.readFileSync(file, "utf8").replace("august-molly-living-v3", "august-molly-living-v3-test-update"));
+    res.end(fs.readFileSync(file, "utf8").replace("august-molly-edge-maze-v4", "august-molly-edge-maze-v4-test-update"));
     return;
   }
   fs.createReadStream(file).pipe(res);
@@ -328,7 +328,12 @@ let browser, page;
   for(let i=0;i<80 && await state('walkers.molly.mode!=="drinking"');i++)await tick(300);
   assert.equal(await state('walkers.molly.mode'),'drinking');
   assert.notEqual(await state('walkers.august.mode'),'drinking');
+  assert.equal(await state('walkers.molly.direction'),1);
+  assert.ok(await state('bowlPlace.x>=90 && (tunnelPlaces[0].x>=80 && tunnelPlaces[1].x<=20)'));
+  assert.ok(await state('Math.abs(walkers.molly.x-bottleDestination("molly").x)<1'));
+  const nod=await state('walkers.molly.el.style.getPropertyValue("--drink-nod")');
   await tick(300);
+  assert.notEqual(await state('walkers.molly.el.style.getPropertyValue("--drink-nod")'),nod);
   await page.screenshot({path:path.join(results,"cozy-drinking.png")});
   await click("pause");
   const beforeRotation = await state('[...companionActions.values()].map(a=>[a.id,a.kind,a.elapsed])');
@@ -407,10 +412,16 @@ let browser, page;
   await tick(6500);
   assert.equal(await state('memories.has("friends")'),true);
   await click('world-tunnel');
-  let insideTunnel=false;
-  for(let i=0;i<35;i++){await tick(400);if(await state('walkers.august.mode==="in-tunnel"'))insideTunnel=true;}
-  assert.equal(insideTunnel,true);
-  assert.equal(await state('[...world.actions.values()].some(a=>a.kind==="tunnel")'),false);
+  await click('world-tunnel'); // rapid second tap must not duplicate the entrance
+  await click('pause'); await tick(3000);
+  assert.equal(await state('miniGame'),null);
+  await click('resume');
+  for(let i=0;i<60 && !await state('miniGame');i++) await tick(400);
+  assert.equal(await state('miniGame.type'),'tunnel');
+  assert.equal(await page.locator('.tunnel-cell').count(),16);
+  assert.equal(await page.locator('#tunnel-buddy').count(),1);
+  assert.equal(await state('world.actions.size'),0);
+  await click('mini-close');
   await click('companion-menu');await click('adopt-baby');
   assert.equal(await page.locator('#baby').isVisible(),true);
   await click('baby');
@@ -425,7 +436,7 @@ let browser, page;
   const solveMaze = async (pauseOnFirst = false) => {
     const maze = await state('miniGame.maze');
     const queue=[[0]],seen=new Set([0]);let route;
-    while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===8){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+    while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===15){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
     assert.ok(route);
     for(const [index,cell] of route.slice(1).entries()){
       await page.locator(`[data-cell="${cell}"]`).click();
@@ -437,9 +448,21 @@ let browser, page;
   };
   await click('companion-menu');await click('tunnel-game');
   assert.equal(await state('feedings.size+companionActions.size+world.actions.size'),0);
+  for (const id of ['tunnel-token','tunnel-buddy']) {
+    const token=page.locator('#'+id);
+    const box=await token.boundingBox();
+    assert.ok(box && box.width>15 && box.height>15, id+' must be visible in the maze');
+    assert.ok(await token.evaluate(async e => {
+      await e.decode(); // A newly inserted image is not necessarily decoded in this frame.
+      return e.complete && e.naturalWidth > 0;
+    }));
+  }
   await page.screenshot({path:path.join(results,'world-tunnel-game.png')});
   await solveMaze(true);
-  await click('mini-again');await solveMaze();await click('mini-close');
+  const firstRoute=await state('mazeSolution(miniGame.maze)');
+  await click('mini-again');
+  assert.notDeepEqual(await state('mazeSolution(miniGame.maze)'),firstRoute);
+  await solveMaze();await click('mini-close');
   pass('randomized connected tunnel maze, real UI solution, pause, reward and replay');
   await resetActors();
   await state('world.socialClock=10;world.dirtClock=4;walkers.august.nextNatural=simulationTime+4;walkers.molly.nextNatural=simulationTime+8');
@@ -508,6 +531,7 @@ let browser, page;
     await click('companion-menu');await click('tunnel-game');
     const puzzleBox=await page.locator('#tunnel-puzzle').boundingBox();
     assert.ok(puzzleBox.x>=0 && puzzleBox.y>=0 && puzzleBox.x+puzzleBox.width<=size.width && puzzleBox.y+puzzleBox.height<=size.height);
+    await page.locator('#tunnel-grid img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
     await page.screenshot({path:path.join(results,`tunnel-${size.width}x${size.height}.png`)});
     await click('mini-close');
   }

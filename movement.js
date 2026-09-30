@@ -350,7 +350,8 @@ function stepMovement(dt) {
       blend = Math.min(1, dt * 5);
     w.vx += ((hx / length) * speed - w.vx) * blend;
     w.vy += ((hy / length) * speed - w.vy) * blend;
-    w.x = clamp(w.x + w.vx * dt, 17, 83);
+    const atBottle = typeof companionActions !== "undefined" && companionActions.get(w.id)?.kind === "drinking";
+    w.x = clamp(w.x + w.vx * dt, 17, atBottle ? 92 : Math.max(83, w.x));
     w.y = clamp(w.y + w.vy * dt, w.mode === "to-house" ? DOOR.y : 39, 80);
     if (Math.abs(w.vx) > 0.7) w.direction = w.vx > 0 ? 1 : -1;
     const velocity = Math.hypot(w.vx, w.vy * 1.65);

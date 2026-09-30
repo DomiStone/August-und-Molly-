@@ -7,7 +7,7 @@ const world = {
   dirt: new Map(), actions: new Map(), dirtId: 0,
   dirtClock: 40, socialClock: 24, uiClock: 0,
 };
-const tunnelPlaces = [{ x: 51, y: 51 }, { x: 49, y: 75 }];
+const tunnelPlaces = [{ x: 85, y: 43 }, { x: 15, y: 51 }];
 const baby = { x: 43, y: 70, parent: "august", clock: 0, hop: 0, gait: 0 };
 
 function safeWorldNumber(value, fallback, min, max) {
@@ -76,13 +76,13 @@ function bottleDestination(id) {
   // SVG nozzle ends at (18,146), in a 100×160 view box.
   const nozzleX = bowlPlace.x - width * 0.32 / habitat.clientWidth * 100;
   const nozzleY = bowlPlace.y + width * 0.66 / habitat.clientHeight * 100;
-  const side = id === "august" ? -1 : 1;
+  const side = -1; // Both approach the right-hand bottle from inside the enclosure.
   let y = nozzleY + 5, geometry;
   for (let i = 0; i < 5; i++) {
     geometry = feedingGeometry(walkers[id], y);
     y = clamp(nozzleY - geometry.mouthY / geometry.height * 100, 42, 80);
   }
-  return { x: clamp(nozzleX + side * geometry.mouthX / geometry.width * 100, 17, 83), y, direction: -side };
+  return { x: clamp(nozzleX + side * geometry.mouthX / geometry.width * 100, 17, 92), y, direction: -side };
 }
 
 function canDrink(action) {
@@ -203,7 +203,7 @@ function startWorldTunnel(ids) {
   for (const id of ids) {
     if (world.actions.get(id)?.kind === "tunnel") continue;
     const side = id === "august" ? -1 : 1;
-    const target = { x: place.x + side * 10, y: place.y + 6 };
+    const target = { x: clamp(place.x + side * 10, 17, 83), y: place.y + 6 };
     sendPet(id, target.x, target.y, () => {
       const action = world.actions.get(id);
       if (!action) return;
@@ -212,8 +212,22 @@ function startWorldTunnel(ids) {
       walkers[id].el.classList.add("tunneling");
       tone("rustle");
     });
-    world.actions.set(id, { kind: "tunnel", phase: "approaching", elapsed: 0, start: target.x, end: place.x - side * 10, y: target.y });
+    world.actions.set(id, { kind: "tunnel", phase: "approaching", elapsed: 0, start: target.x, end: clamp(place.x - side * 10, 17, 83), y: target.y });
   }
+}
+
+function startTunnelAdventure() {
+  if (paused || miniGame || searchActive) return;
+  if ([...world.actions.values()].some(a => a.kind === "maze-entry")) return;
+  const ids = [...selected], place = tunnelPlaces[world.tunnelPlace];
+  for (const [index, id] of ids.entries()) {
+    sendPet(id, clamp(place.x + (place.x > 50 ? -9 : 9) - index * 7, 17, 83), place.y + 7 + index * 5, () => {
+      if (world.actions.get(id)?.kind !== "maze-entry") return;
+      startMiniGame("tunnel", ids);
+    });
+    world.actions.set(id, { kind: "maze-entry", partner: ids.find(other => other !== id) });
+  }
+  cozyNotice("Zum Tunnel! Danach zeigst du den Weg zum Gemüse. 🌀");
 }
 
 function discoverToy() {
@@ -373,10 +387,10 @@ $("#house-sleep").addEventListener("click", () => {
   stopSearch();
   selected.forEach(startHouseSleep);
 });
-$("#world-tunnel").addEventListener("click", () => startWorldTunnel([...selected]));
+$("#world-tunnel").addEventListener("click", startTunnelAdventure);
 $("#move-tunnel").addEventListener("click", () => {
   if (paused) return;
-  for (const [id, action] of [...world.actions]) if (action.kind === "tunnel") cancelWorldAction(id);
+  for (const [id, action] of [...world.actions]) if (["tunnel", "maze-entry"].includes(action.kind)) cancelWorldAction(id);
   world.tunnelPlace = (world.tunnelPlace + 1) % 2;
   refreshWorldUi();
   saveCompanions();
