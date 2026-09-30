@@ -99,13 +99,16 @@ const context = vm.createContext({
     throw Error("Unowned interval added");
   },
 });
-for (const name of ["game", "food-view", "feeding", "movement", "minigames", "companions"])
+for (const name of ["game", "food-view", "feeding", "movement", "minigames", "companions", "world", "tunnel-game"])
   vm.runInContext(fs.readFileSync(name + ".js", "utf8"), context, {
     filename: name + ".js",
   });
 const run = (code) => vm.runInContext(code, context);
 const step = (seconds) =>
   run(`for(let i=0;i<${seconds * 60};i++)stepMovement(1/60)`);
+// Focused manual-feeding regressions have no unattended rack meals in flight.
+// The autonomous stocked-rack chain is exercised separately below.
+run("world.hay=0");
 for (const ids of [["august"], ["molly"], ["august", "molly"]]) {
   for (const [index, type] of [
     "Karotte",
@@ -231,7 +234,7 @@ assert.equal(run("companionActions.size"), 2);
 step(25);
 assert.ok(run("memories.has('ball')"));
 run("useCompanionActivity('drinking');pets.august.water=45;pets.molly.water=45");
-step(25);
+step(35);
 assert.ok(run("pets.august.water") > 70);
 assert.ok(run("pets.molly.water") > 70);
 for (const code of ["sendPet('august',30,60)", "doBehavior('august','scratching')", "startFeeding(['august'],'Heu')", "startMiniGame('dance')"]) {
@@ -257,5 +260,81 @@ assert.ok(run("Number.isFinite(pets.august.water)"));
 run("localStorage.setItem=()=>{throw Error('blocked')};saveCompanions()");
 assert.equal(run("storageAvailable"), false);
 run("cancelAllCompanionActions();cancelAllFeeding();pets.august.energy=40;naturalCompanionBehavior(walkers.august)");
-assert.equal(run("companionActions.get('august').kind"), "napping");
+assert.equal(run("walkers.august.sleepRequested"), true);
 console.log("PASS: companion activities, pause, cancellation, favorites, unique memories, bounded storage restore and blocked/corrupt storage.");
+
+run("cancelAllWorldActions();cancelAllCompanionActions();cancelAllFeeding();world.minutes=720;world.socialClock=99999;water=80;pets.august.water=40;pets.molly.water=45;useCompanionActivity('drinking')");
+assert.equal(run("companionActions.get('molly').phase"),'waiting');
+assert.ok(run("walkers.molly.tx") < 50, 'second drinker waits away from nozzle');
+step(36);
+assert.ok(run("pets.august.water") > 68);
+assert.ok(run("pets.molly.water") > 73);
+assert.ok(run("water") < 69 && run("water") > 66);
+run("cancelAllCompanionActions();water=20;pets.molly.water=40;useCompanionActivity('drinking');cancelCompanionAction('august')");
+step(25);
+assert.ok(run("pets.molly.water") > 68, 'canceled first drinker must release the queue');
+assert.equal(run("[...companionActions.values()].some(a=>a.kind==='drinking')"),false);
+run("water=0;cancelAllCompanionActions();startCompanionAction('august','drinking')");
+assert.equal(run("companionActions.has('august')"),false);
+const thirst = run("pets.august.water");
+el("#refill").click();
+assert.equal(run("pets.august.water"),thirst,"refilling must not instantly satisfy thirst");
+run("cancelAllWorldActions();cancelAllCompanionActions();cancelAllFeeding();world.hay=16;pets.august.food=45;pets.molly.food=45;startRackMeal(['august','molly'])");
+assert.equal(run("hayReservations()"),16);
+run("startRackMeal(['august','molly'])");
+assert.equal(run("hayReservations()"),16);
+step(25);
+assert.equal(run("world.hay"),0);
+assert.equal(run("hayReservations()"),0);
+assert.ok(run("pets.august.food")>60);
+run("world.hay=8;startRackMeal(['august']);sendPet('august',30,65)");
+assert.equal(run("world.hay"),8);
+assert.equal(run("hayReservations()"),0);
+run("world.hay=0;pets.august.energy=40;pets.molly.energy=42;startHouseSleep('august');startHouseSleep('molly')");
+const sleepModes = new Set();
+for(let i=0;i<55;i++){step(1);sleepModes.add(run("walkers.august.mode"));}
+for(const mode of ['entering','house-sleep','peeking','exiting','walk'])assert.ok(sleepModes.has(mode),mode);
+assert.ok(run("pets.august.energy")>65);
+run("startHouseSleep('august')");
+step(10);
+run("startFeeding(['august'],'Karotte')");
+assert.equal(run("walkers.august.sleepRequested"),false);
+assert.equal(el('#sleep-august').hidden,true);
+run("cancelAllFeeding();cancelAllWorldActions();startSocialWalk(true)");
+step(8);
+assert.equal(run("memories.has('friends')"),true);
+run("startSocialWalk(true);startFeeding(['august'],'Gurke')");
+assert.equal(run("world.actions.size"),0);
+run("cancelAllFeeding();startWorldTunnel(['august','molly'])");
+step(20);
+assert.equal(run("[...world.actions.values()].some(a=>a.kind==='tunnel')"),false);
+run("addLitter(30,60);addLitter(40,65);addLitter(50,70);setPause(true)");
+const dirtCount=run("world.dirt.size");
+run("cleanEnclosure()");
+assert.equal(run("world.dirt.size"),dirtCount);
+run("setPause(false);cleanEnclosure()");
+assert.equal(run("world.dirt.size"),0);
+assert.equal(run("memories.has('clean')"),true);
+el('#adopt-baby').click();el('#adopt-baby').click();
+assert.equal(run("world.baby"),true);
+step(3);
+assert.ok(run("Number.isFinite(baby.x) && Number.isFinite(baby.y)"));
+for(let trial=0;trial<30;trial++){
+  const maze=JSON.parse(run("JSON.stringify(makeTunnelMaze())"));
+  const visited=new Set([0]), queue=[0];
+  while(queue.length)for(const neighbor of maze[queue.shift()])if(!visited.has(neighbor)){visited.add(neighbor);queue.push(neighbor);}
+  assert.equal(visited.size,9);
+}
+run("startMiniGame('tunnel')");
+const maze=JSON.parse(run("JSON.stringify(miniGame.maze)"));
+const queue=[[0]], seen=new Set([0]);let route;
+while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===8){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+for(const cell of route.slice(1)){run(`moveThroughMaze(${cell})`);step(.8);}
+assert.equal(run("miniGame.phase"),'won');
+assert.equal(run("miniGame.score"),3);
+assert.equal(run("memories.has('tunnel')"),true);
+run("endMiniGame();restoreWorld({hay:-4,baby:true,dirt:Array.from({length:20},()=>({x:900,y:-50})),bedding:99})");
+assert.equal(run("world.hay"),0);
+assert.ok(run("world.dirt.size")<=6);
+assert.equal(run("world.bedding"),2);
+console.log("PASS: thirst/resource chain, serialized bottle, empty/refill, reserved hay bites/cancel, house sleep/wake, social ownership, tunnel, cleaning/pause, one baby, 30 solvable mazes and save validation.");

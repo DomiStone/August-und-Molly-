@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "august-molly-cozy-v2";
+const CACHE = "august-molly-living-v3";
 const FILES = [
   "./",
   "index.html",
@@ -10,6 +10,8 @@ const FILES = [
   "food-view.js",
   "feeding.js",
   "companions.js",
+  "world.js",
+  "tunnel-game.js",
   "offline.js",
   "assets/august.png",
   "assets/molly.png",
@@ -26,6 +28,9 @@ const FILES = [
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
+});
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "ACTIVATE_UPDATE") self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(

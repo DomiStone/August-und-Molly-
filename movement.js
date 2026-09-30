@@ -62,13 +62,14 @@ function resetAppearance(w) {
   $("#peek-" + w.id).classList.remove("visible");
 }
 function takeOutside(w) {
-  if (["inside", "peeking", "entering", "exiting"].includes(w.mode)) {
+  if (["inside", "peeking", "entering", "exiting", "house-sleep"].includes(w.mode)) {
     w.x = DOOR.x + (w.id === "august" ? -5 : 5);
     w.y = 43;
   }
   resetAppearance(w);
 }
 function sendPet(id, x, y, onArrival = null) {
+  if (typeof cancelWorldAction === "function") cancelWorldAction(id);
   cancelFeeding(id);
   if (typeof cancelCompanionAction === "function") cancelCompanionAction(id);
   const w = walkers[id];
@@ -82,6 +83,7 @@ function sendPet(id, x, y, onArrival = null) {
   w.nextNatural = simulationTime + 18 + Math.random() * 12;
 }
 function doBehavior(id, mode, duration = 3) {
+  if (typeof cancelWorldAction === "function") cancelWorldAction(id);
   cancelFeeding(id);
   if (typeof cancelCompanionAction === "function") cancelCompanionAction(id);
   const w = walkers[id];
@@ -143,8 +145,23 @@ function stepMovement(dt) {
   stepGameUi(dt);
   stepFeeding(dt);
   if (typeof stepCompanions === "function") stepCompanions(dt);
+  if (typeof stepWorld === "function") stepWorld(dt);
   if (typeof stepMiniGame === "function") stepMiniGame(dt);
   for (const w of Object.values(walkers)) {
+    if (w.mode === "in-tunnel") { renderWalker(w, false); continue; }
+    if (w.mode === "house-sleep") {
+      w.timer -= dt;
+      pets[w.id].energy = Math.min(100, pets[w.id].energy + dt * 1.7);
+      if (w.timer <= 0) {
+        w.sleepRequested = false;
+        $("#sleep-" + w.id).hidden = true;
+        w.mode = "peeking";
+        w.timer = 6;
+        $("#peek-" + w.id).classList.add("visible");
+        rememberMoment("rest");
+      }
+      continue;
+    }
     if (["napping", "playing", "drinking"].includes(w.mode)) {
       renderWalker(w, false);
       continue;
@@ -210,6 +227,13 @@ function stepMovement(dt) {
     if (w.mode === "inside") {
       w.timer -= dt;
       if (w.timer <= 0) {
+        if (w.sleepRequested) {
+          w.mode = "house-sleep";
+          w.timer = 20;
+          $("#sleep-" + w.id).hidden = false;
+          tone("sleepy");
+          continue;
+        }
         w.mode = "peeking";
         w.timer = 6;
         $("#peek-" + w.id).classList.add("visible");
@@ -257,6 +281,7 @@ function stepMovement(dt) {
       !(typeof miniGame !== "undefined" && miniGame) &&
       !searchActive &&
       !feedings.has(w.id) &&
+      !(typeof worldBusy === "function" && worldBusy(w.id)) &&
       !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id)) &&
       !w.arrival &&
       w.mode !== "to-house" &&
@@ -279,7 +304,8 @@ function stepMovement(dt) {
     if (w.wait > 0) {
       w.wait = Math.max(0, w.wait - dt);
       renderWalker(w, false);
-      if (w.wait === 0) {
+      if (w.wait === 0 && !(typeof worldBusy === "function" && worldBusy(w.id))
+        && !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id))) {
         const next = w.nextNatural;
         chooseDestination(w);
         w.nextNatural = next;
@@ -309,6 +335,7 @@ function stepMovement(dt) {
     if (
       sep < 17 &&
       !feedings.has(w.id) &&
+      !(typeof worldBusy === "function" && worldBusy(w.id)) &&
       !(typeof hasCompanionAction === "function" && hasCompanionAction(w.id)) &&
       w.mode !== "to-house" &&
       !["inside", "peeking", "entering"].includes(other.mode)
@@ -319,7 +346,7 @@ function stepMovement(dt) {
       if (Math.abs(sy) < 4) hy += (w.id === "august" ? -1 : 1) * force * 0.8;
     }
     const length = Math.hypot(hx, hy * 1.65) || 1,
-      speed = (w.id === "august" ? 10 : 8.8) * Math.min(1, 0.4 + dist / 8),
+      speed = (w.id === "august" ? 10 : 8.8) * (w.runUntil > simulationTime ? 1.4 : 1) * Math.min(1, 0.4 + dist / 8),
       blend = Math.min(1, dt * 5);
     w.vx += ((hx / length) * speed - w.vx) * blend;
     w.vy += ((hy / length) * speed - w.vy) * blend;

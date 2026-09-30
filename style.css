@@ -18,7 +18,7 @@
   filter: drop-shadow(0 3px 2px #45372120);
 }
 .world-object svg { width: 100%; display: block; pointer-events: none; }
-#drink-bowl { width: clamp(52px, 7vw, 84px); }
+#drink-bowl { width: clamp(42px, 5.2vw, 64px); }
 #willow-ball.being-played svg { animation: ball-roll 1.8s ease-in-out infinite; }
 @keyframes ball-roll { 50% { transform: translateX(6px) rotate(14deg); } }
 .pig.napping > img {
@@ -1009,6 +1009,80 @@ button:hover:not(:disabled) {
 }
 
 /* Separate world objects, not floating reward emojis. */
+#daylight {
+  position: absolute; inset: 0; z-index: 9; pointer-events: none;
+  background: #534675; opacity: 0; transition: opacity 8s linear;
+}
+#hay-rack { left: 23%; top: 48%; width: clamp(56px, 8vw, 96px); }
+#world-tunnel { width: clamp(86px, 17vw, 180px); z-index: 6; }
+.pig.tunneling { opacity: var(--tunnel-opacity, 1); }
+.house-dream {
+  position: absolute; top: 24%; z-index: 7; pointer-events: none;
+  font: 600 clamp(18px, 2.5vw, 30px) Georgia, serif;
+  color: #fff7d7; text-shadow: 0 2px 5px #31251b;
+  animation: sleepy-drift 4s ease-in-out infinite;
+}
+#sleep-august { left: 29%; }
+#sleep-molly { left: 61%; }
+#litter-layer { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+.litter {
+  position: absolute; width: 44px; height: 44px; border: 0;
+  background: none; padding: 12px; pointer-events: auto;
+  transform: translate(-50%, -50%); border-radius: 50%;
+}
+.litter i { display: block; width: 12px; height: 6px; background: #79543b; border-radius: 60%; box-shadow: 0 2px 1px #4b302544; transform: rotate(-20deg); }
+.litter i + i { margin-left: 10px; transform: rotate(25deg); }
+.litter:hover, .litter:focus-visible { background: #fff8; }
+.world-supplies { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; margin-bottom: 12px; }
+.world-supplies span { background: #f0ecd9; padding: 6px 8px; border-radius: 10px; }
+.cozy-panel button:disabled { opacity: .6; }
+#habitat::after {
+  content: ""; position: absolute; left: 18%; top: 67%; width: 61%; height: 14%;
+  border-radius: 50%; background: var(--bedding-tint, transparent); pointer-events: none; z-index: 1;
+  filter: blur(18px); transition: background 1s;
+}
+#habitat[data-bedding="1"] { --bedding-tint: #aecda841; }
+#habitat[data-bedding="2"] { --bedding-tint: #efafbb45; }
+.baby-pet {
+  position: absolute; width: 11%; min-width: 44px; background: none;
+  padding: 0; border: 0; z-index: 6; transform: translate(-50%, -68%);
+  filter: drop-shadow(0 5px 3px #4b302533);
+}
+.baby-pet img { width: 100%; display: block; transform: scaleX(var(--baby-facing, 1)); }
+.baby-walk { display: none; width: 100%; aspect-ratio: 384/272; background: url("assets/august-walk.webp") no-repeat; background-size: 400% 200%; transform: scaleX(var(--baby-facing, 1)); }
+.baby-pet[data-mode="following"] img { display: none; }
+.baby-pet[data-mode="following"] .baby-walk { display: block; }
+.baby-pet[data-mode="sleeping"]::after { content: "zZ"; position: absolute; top: 0; left: 60%; color: #fff; text-shadow: 0 1px 3px #443; }
+.baby-pet[data-mode="sleeping"] { animation: baby-breathe 3s ease-in-out infinite; }
+.baby-pet[data-mode="nibbling"] img { animation: sniff .8s ease-in-out infinite; }
+.baby-pet[data-mode="hopping"] { animation: baby-hop 1s ease-in-out infinite; }
+@keyframes baby-breathe { 50% { transform: translate(-50%, -68%) scaleY(.97); } }
+@keyframes baby-hop { 50% { transform: translate(-50%, -82%); } }
+.in-minigame #litter-layer, .in-minigame #baby, .in-minigame .house-dream { visibility: hidden; }
+#tunnel-puzzle { position: absolute; top: 105px; left: 50%; transform: translateX(-50%); width: min(320px, 86vw); padding: 12px; border-radius: 22px; background: #fffbee; color: #435836; pointer-events: auto; box-shadow: 0 8px 30px #38281830; }
+#tunnel-puzzle h2 { font-size: 18px; margin: 0 0 4px; text-align: center; }
+#tunnel-hint { font-size: 12px; text-align: center; margin: 0 0 10px; min-height: 30px; }
+#tunnel-grid { display: grid; position: relative; grid-template-columns: repeat(3, 1fr); width: min(270px, 43vh); aspect-ratio: 1; margin: auto; background: #b89667; border-radius: 12px; overflow: hidden; }
+.tunnel-cell { border: 6px solid #755c3c; border-radius: 0; padding: 0; background: #d6b98a; font-size: 24px; min-width: 0; min-height: 0; }
+.tunnel-cell.visited { background: #e9cf96; }
+.tunnel-cell:not(:disabled) { background: #e0e7b1; cursor: pointer; }
+#tunnel-token { position: absolute; width: 24%; height: 24%; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; }
+.in-tunnel-game .mini-controls { bottom: 15px; }
+.in-tunnel-game #reaction { display: none; }
+@media (max-width: 700px) {
+  #tunnel-puzzle { top: 150px; }
+  .baby-pet { width: 14%; }
+}
+@media (max-height: 500px) {
+  #tunnel-puzzle { top: 65px; padding: 8px; }
+  #tunnel-grid { width: min(220px, 40vh); }
+  #tunnel-puzzle h2 { font-size: 15px; }
+  #tunnel-hint { font-size: 11px; min-height: 26px; margin-bottom: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .house-dream, .baby-pet, .baby-pet img { animation: none !important; }
+  #daylight { transition: none; }
+}
 #food-layer {
   position: absolute;
   inset: 0;

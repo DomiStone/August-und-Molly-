@@ -63,6 +63,10 @@ function startFeeding(ids, type) {
     feedings.set(id, action);
     layoutFeeding(action);
     w.el.dataset.feeding = "approaching";
+    if (typeof personalities !== "undefined" && personalities[id].favorite === type) {
+      w.runUntil = simulationTime + 8;
+      effect(id, "💛");
+    }
     message(`${pets[id].name} läuft zum Futter.`);
   }
 }
@@ -135,6 +139,8 @@ function stepFeeding(dt) {
     if (action.clock < BITE_SECONDS) continue;
     action.clock -= BITE_SECONDS;
     action.bite++;
+    if (typeof consumeRackBite === "function") consumeRackBite(action);
+    if (action.bite === 2 || action.bite === 6) tone("nibble");
     renderFoodBite(action);
     spawnFoodCrumbs(action);
     // The pet follows the retreating bite edge; the food never slides/scales.

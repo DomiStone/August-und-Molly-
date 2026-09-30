@@ -70,3 +70,46 @@ Erweiterte Tests:
 Nickerchen nutzt die vorhandenen Tierfotos mit ruhiger Körperbewegung und
 Schlafzeichen; es gibt keine neu gezeichneten geschlossenen Augen oder getrennten
 Kiefer. Kein physisches Fire-Tablet verfügbar: responsive Prüfung in Chromium.
+
+## Lebendiges Gehege
+
+Ausgangsstand: Merge `6f5a8fbd00b5fe013f842bfe906f6b6e258f2395`.
+Vollständige Versorgungsketten statt weiterer losgelöster Knöpfe:
+Trinkflasche mit einer belegbaren Öffnung, Heuvorrat mit reservierten Bissen,
+Schlaf im vorhandenen Haus, soziale Gruppenaktionen, begrenzter Schmutz,
+Reinigung, Tag-/Abendstimmung, Gehege-Tunnel und eine einzelne Fips-Adoption.
+
+Behobene Inkonsistenzen: Auffüllen setzte zuvor Durst sofort zurück; die
+Flaschenmenge sank ohne Trinken. Alte Spielstände konnten keine leeren Vorräte
+behalten (untere Bedürfnisgrenze wurde auch auf Wasser angewendet). Der bisherige
+Offline-Wechsel hatte keine sichtbare, sichere Aktualisierungsaktion. Der
+Hüpfparcours hatte für Meerschweinchen übertrieben große Sprunghöhen.
+Die erste Bildprüfung zeigte sich überlagernde Köpfe an der Trinköffnung:
+Ein wartendes Tier bleibt jetzt mit Abstand und rückt erst nach Freigabe nach.
+Abbruch des ersten Trinkers gibt die Warteschlange ebenfalls frei; natürliche
+Zielwechsel dürfen wartende Versorgungsaktionen nicht versehentlich abbrechen.
+
+Neue Zustands- und Browserprüfungen:
+
+- Selbstständiges Durst-/Hunger-Verhalten, echte Ressourcenänderung, leere
+  Vorräte und Nachfüllen, serialisierte Trinköffnung, Biss-Reservierung/Abbruch.
+- Müdigkeit → Tür → Schlaf → Energie → Aufwachen/Fenster → Ausgehen; Pause und
+  Eingriffe während dieser Phasen.
+- Gemeinsames Folgen, Unterbrechen beider Partner ohne verwaiste Zustände,
+  Gehege-Tunnel, Umstellen, Reinigung und Baby-Adoption mit Maximalzahl eins.
+- 30 generierte Labyrinthe auf vollständige Erreichbarkeit; echte UI-Lösung,
+  Pause in der Bewegung, Belohnung, Wiederholung und kleine Bildschirme.
+- Zwei Minuten unbeaufsichtigte Browser-Simulation, begrenzte Verschmutzung,
+  endliche Positionen und Zuordnung aller sichtbaren Futterobjekte.
+- Schema-1-Migration, Schema-2-Speichern, Offline-Neustart und tatsächlicher
+  Service-Worker-Update-Handschlag ohne automatische Unterbrechung des Spiels.
+
+Bewusst begrenzt: Fips ist ein begleitendes Jungtier mit vorhandenen verkleinerten
+Assets, kein separat auswählbarer dritter Erwachsener. Kein Baueditor oder neue
+Landkarte; Einrichtung wird auf geprüfte Plätze gesetzt. Keine Kamera-/Mikrofon-
+Reaktionen: Geräuschreaktionen werden durch eigene Spielaktionen ausgelöst.
+
+Die ausschließlich für Entwicklung/Tests verwendete Playwright-Abhängigkeit
+wurde von 1.51.1 auf 1.56.1 aktualisiert, nachdem die Testinstallation eine
+Sicherheitswarnung für die alte Version gemeldet hatte. Das ausgelieferte Spiel
+hat weiterhin keine Laufzeit-Abhängigkeiten.
