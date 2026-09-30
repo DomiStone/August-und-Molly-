@@ -1,18 +1,19 @@
 "use strict";
-const CACHE = "august-molly-living-v3";
+const CACHE = "august-molly-edge-maze-v4";
 const FILES = [
   "./",
   "index.html",
-  "style.css",
-  "game.js",
-  "movement.js",
-  "minigames.js",
-  "food-view.js",
-  "feeding.js",
-  "companions.js",
-  "world.js",
-  "tunnel-game.js",
-  "offline.js",
+  "index.html?v=edge-maze-v4",
+  "style.css?v=edge-maze-v4",
+  "game.js?v=edge-maze-v4",
+  "movement.js?v=edge-maze-v4",
+  "minigames.js?v=edge-maze-v4",
+  "food-view.js?v=edge-maze-v4",
+  "feeding.js?v=edge-maze-v4",
+  "companions.js?v=edge-maze-v4",
+  "world.js?v=edge-maze-v4",
+  "tunnel-game.js?v=edge-maze-v4",
+  "offline.js?v=edge-maze-v4",
   "assets/august.png",
   "assets/molly.png",
   "assets/enclosure-large.webp",
@@ -27,7 +28,7 @@ const FILES = [
   "assets/hurdle.webp",
 ];
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES.map(path => new Request(path, { cache: "reload" })))));
 });
 self.addEventListener("message", (event) => {
   if (event.data?.type === "ACTIVATE_UPDATE") self.skipWaiting();

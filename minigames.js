@@ -31,7 +31,7 @@ function endMiniGame() {
     sendPet(id, id === "august" ? 29 : 73, 66);
   }
 }
-function startMiniGame(type) {
+function startMiniGame(type, ids = selected) {
   if (paused) return;
   if (typeof cancelAllWorldActions === "function") cancelAllWorldActions();
   if (typeof cancelAllCompanionActions === "function") cancelAllCompanionActions();
@@ -45,7 +45,7 @@ function startMiniGame(type) {
     type,
     score: 0,
     phase: "ready",
-    ids: [...selected],
+    ids: [...ids],
     index: 0,
     timer: 0,
     target: "wiggle",
