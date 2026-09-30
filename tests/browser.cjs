@@ -452,7 +452,10 @@ let browser, page;
     const token=page.locator('#'+id);
     const box=await token.boundingBox();
     assert.ok(box && box.width>15 && box.height>15, id+' must be visible in the maze');
-    assert.ok(await token.evaluate(e=>e.complete && e.naturalWidth>0));
+    assert.ok(await token.evaluate(async e => {
+      await e.decode(); // A newly inserted image is not necessarily decoded in this frame.
+      return e.complete && e.naturalWidth > 0;
+    }));
   }
   await page.screenshot({path:path.join(results,'world-tunnel-game.png')});
   await solveMaze(true);
@@ -528,6 +531,7 @@ let browser, page;
     await click('companion-menu');await click('tunnel-game');
     const puzzleBox=await page.locator('#tunnel-puzzle').boundingBox();
     assert.ok(puzzleBox.x>=0 && puzzleBox.y>=0 && puzzleBox.x+puzzleBox.width<=size.width && puzzleBox.y+puzzleBox.height<=size.height);
+    await page.locator('#tunnel-grid img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
     await page.screenshot({path:path.join(results,`tunnel-${size.width}x${size.height}.png`)});
     await click('mini-close');
   }
