@@ -99,13 +99,14 @@ let browser, page;
     await click(id);
     assert.deepEqual(await state("selected"), expected);
   }
-  const ground = await page.evaluate(() => {
+  const findGround = () => page.evaluate(() => {
     for (let y=300;y<450;y+=25) for(let x=300;x<700;x+=25) {
       const e=document.elementFromPoint(x,y);
       if(e?.id==='habitat'||e?.classList.contains('habitat-background'))return {x,y};
     }
     throw Error('No tappable ground');
   });
+  const ground = await findGround();
   const oldPosition=await state('walkers.august.x');
   await page.mouse.click(ground.x, ground.y);
   assert.equal(await state('walkers.molly.tx-walkers.august.tx'),20);
@@ -244,7 +245,9 @@ let browser, page;
     assert.equal(await state("feedings.size"), 0);
   }
   await feed("Paprika", "both");
-  await page.mouse.click(500, 420);
+  // Animals move randomly: a fixed coordinate can hit a pet instead of ground.
+  const interruptGround = await findGround();
+  await page.mouse.click(interruptGround.x, interruptGround.y);
   assert.equal(await state("feedings.size"), 0);
   pass(
     "rapid taps, movement and care interruptions leave no orphan food or timers",
