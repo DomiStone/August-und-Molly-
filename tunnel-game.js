@@ -1,7 +1,8 @@
 "use strict";
 
-const MAZE_SIZE = 4;
+const MAZE_SIZE = 5;
 const MAZE_GOAL = MAZE_SIZE * MAZE_SIZE - 1;
+const MAZE_COMPLETE = 31;
 let previousMazeRoute = "";
 
 // A spanning tree creates reachable rooms, junctions and harmless dead ends.
@@ -77,6 +78,10 @@ function makeTunnelMaze() {
 function prepareTunnelPuzzle() {
   const g = miniGame;
   g.maze = makeTunnelMaze();
+  Object.assign(g, makeMazeRiddles(g.maze));
+  g.inventory = 0;
+  g.message = "Sammle Schlüssel A und B sowie 3 Zutaten. Dann zum Picknick 🧺!";
+  g.hintCell = null;
   g.cell = 0;
   g.visited = new Set([0]);
   g.phase = "ready";
@@ -90,7 +95,6 @@ function prepareTunnelPuzzle() {
     button.className = "tunnel-cell";
     button.dataset.cell = cell;
     button.setAttribute("aria-label", `Tunnelraum ${Math.floor(cell / MAZE_SIZE) + 1}, ${cell % MAZE_SIZE + 1}${cell === MAZE_GOAL ? ", Gemüseziel" : ""}`);
-    button.textContent = cell === MAZE_GOAL ? "🥬" : "";
     const directions = [cell - MAZE_SIZE, cell + 1, cell + MAZE_SIZE, cell - 1];
     ["Top", "Right", "Bottom", "Left"].forEach((side, index) => {
       if (g.maze[cell].includes(directions[index])) button.style[`border${side}Color`] = "transparent";
@@ -143,16 +147,33 @@ function drawTunnelPuzzle() {
   g.buttons.forEach((button, cell) => {
     button.disabled = g.phase !== "ready" || !g.maze[g.cell].includes(cell);
     button.classList.toggle("visited", g.visited.has(cell));
+    button.classList.toggle("maze-hint", cell === g.hintCell);
+    const gate = g.gates.find(gate => gate.cell === cell);
+    const item = g.items.find(item => item.cell === cell && !(g.inventory & item.bit));
+    const locked = gate && !(g.inventory & gate.bit);
+    button.classList.toggle("maze-locked", Boolean(locked));
+    button.textContent = locked ? `🔒${gate.name}` : item ? item.symbol : cell === MAZE_GOAL ? "🧺" : "";
+    button.setAttribute("aria-label", `Raum ${Math.floor(cell / MAZE_SIZE) + 1}, ${cell % MAZE_SIZE + 1}${locked ? ", Tür " + gate.name + ": Schlüssel fehlt" : item ? ", " + item.label : cell === MAZE_GOAL ? ", Picknickziel" : ""}`);
     button.setAttribute("aria-current", cell === g.cell ? "location" : "false");
   });
   $("#tunnel-hint").textContent = g.phase === "won"
-    ? "Gefunden! Noch eine Runde mit neuen Wegen?"
-    : g.ids.map(id => pets[id].name).join(" & ") + ": Finde den Weg zum Gemüse. Tippe auf einen offenen Nachbarraum; Sackgasse? Gehe zurück.";
+    ? "Picknick geschafft! Noch einmal mit neuen Wegen und Verstecken?"
+    : g.message;
+  const foodCount = g.items.filter(item => item.bit >= 4 && (g.inventory & item.bit)).length;
+  $("#tunnel-inventory").textContent = `Schlüssel A ${g.inventory & 1 ? "✓" : "○"} · B ${g.inventory & 2 ? "✓" : "○"} · Zutaten ${foodCount}/3`;
+  $("#tunnel-tip").disabled = g.phase !== "ready";
 }
 
 function moveThroughMaze(cell) {
   const g = miniGame;
   if (paused || g?.type !== "tunnel" || g.phase !== "ready" || !g.maze[g.cell].includes(cell)) return;
+  const gate = g.gates.find(gate => gate.cell === cell);
+  if (gate && !(g.inventory & gate.bit)) {
+    g.message = `Diese Tür braucht Schlüssel ${gate.name}. Suche 🔑${gate.name} in einem anderen Gang.`;
+    drawTunnelPuzzle();
+    return;
+  }
+  g.hintCell = null;
   g.from = g.cell;
   g.to = cell;
   g.timer = 0;
@@ -163,7 +184,7 @@ function moveThroughMaze(cell) {
 
 function stepTunnelPuzzle(dt) {
   const g = miniGame;
-  if (g?.type !== "tunnel" || g.phase !== "travelling") return;
+  if (paused || g?.type !== "tunnel" || g.phase !== "travelling") return;
   g.timer += dt;
   const progress = Math.min(1, g.timer / 0.65);
   positionTunnelToken(g.from, g.to, progress);
@@ -171,8 +192,17 @@ function stepTunnelPuzzle(dt) {
   g.cell = g.to;
   g.visited.add(g.cell);
   g.phase = "ready";
-  g.score = Math.min(2, Math.floor((g.visited.size - 1) / 3));
-  if (g.cell === MAZE_GOAL) { g.score = 3; winMiniGame(); }
+  const item = g.items.find(item => item.cell === g.cell && !(g.inventory & item.bit));
+  if (item) {
+    g.inventory |= item.bit;
+    g.message = item.bit < 4 ? `${item.label} gefunden! Die passende Tür ist jetzt offen.` : `${item.label} im Picknickkorb! Suche die übrigen Zutaten.`;
+    tone("happy");
+  }
+  g.score = Math.min(2, g.items.filter(item => item.bit >= 4 && (g.inventory & item.bit)).length);
+  if (g.cell === MAZE_GOAL) {
+    if (g.inventory === MAZE_COMPLETE) { g.score = 3; winMiniGame(); }
+    else g.message = "Der Picknickkorb ist noch nicht voll. Suche alle 3 Zutaten und beide Schlüssel!";
+  }
   starDisplay(g.score);
   drawTunnelPuzzle();
 }
@@ -184,3 +214,73 @@ function closeTunnelPuzzle() {
 }
 
 $("#tunnel-game").addEventListener("click", () => startMiniGame("tunnel"));
+
+// Each key is placed on the reachable side of its own door. Doors are on
+// the unique start-to-goal route, so both locks matter and cannot trap a pet.
+function makeMazeRiddles(maze) {
+  const route = mazeSolution(maze);
+  const gates = [1, 2].map((bit, index) => ({
+    cell: route[Math.floor((route.length - 1) * (index + 1) / 3)],
+    bit,
+    name: index === 0 ? "A" : "B",
+  }));
+  const used = new Set([0, MAZE_GOAL, ...gates.map(gate => gate.cell)]);
+  const items = [];
+  for (const gate of gates) {
+    const blocked = new Set(gates.filter(other => other.bit >= gate.bit).map(other => other.cell));
+    const reachable = [0], seen = new Set([0]);
+    for (let i = 0; i < reachable.length; i++) {
+      for (const cell of maze[reachable[i]]) {
+        if (!seen.has(cell) && !blocked.has(cell)) { seen.add(cell); reachable.push(cell); }
+      }
+    }
+    const cell = chooseMazeHidingPlace(maze, reachable.filter(cell => !used.has(cell)), route);
+    used.add(cell);
+    items.push({ cell, bit: gate.bit, symbol: `🔑${gate.name}`, label: `Schlüssel ${gate.name}` });
+  }
+  for (const [index, [symbol, label]] of [["🥕", "Karotte"], ["🥒", "Gurke"], ["🌿", "Kräuter"]].entries()) {
+    const cell = chooseMazeHidingPlace(maze, maze.map((_, cell) => cell).filter(cell => !used.has(cell)), route);
+    used.add(cell);
+    items.push({ cell, bit: 4 << index, symbol, label });
+  }
+  return { gates, items };
+}
+
+function chooseMazeHidingPlace(maze, candidates, route) {
+  // Prefer side corridors and dead ends: finding the exit alone is not enough.
+  const detours = candidates.filter(cell => !route.includes(cell));
+  const pool = detours.length ? detours : candidates;
+  const deadEnds = pool.filter(cell => maze[cell].length === 1);
+  const choices = deadEnds.length ? deadEnds : pool;
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function showMazeTip() {
+  const g = miniGame;
+  if (paused || g?.type !== "tunnel" || g.phase !== "ready") return;
+  // Search (room, inventory), not just rooms: a useful route may backtrack
+  // after collecting a key. Reveal one step only, never move for the player.
+  const queue = [{ cell: g.cell, inventory: g.inventory, first: null }];
+  const seen = new Set([`${g.cell}:${g.inventory}`]);
+  for (let i = 0; i < queue.length; i++) {
+    const state = queue[i];
+    if (state.cell === MAZE_GOAL && state.inventory === MAZE_COMPLETE) {
+      g.hintCell = state.first;
+      g.message = "Der umrandete Nachbarraum führt dich weiter. Du darfst jederzeit zurückgehen.";
+      drawTunnelPuzzle();
+      return;
+    }
+    for (const cell of g.maze[state.cell]) {
+      const gate = g.gates.find(gate => gate.cell === cell);
+      if (gate && !(state.inventory & gate.bit)) continue;
+      const item = g.items.find(item => item.cell === cell);
+      const inventory = state.inventory | (item?.bit || 0);
+      const key = `${cell}:${inventory}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      queue.push({ cell, inventory, first: state.first ?? cell });
+    }
+  }
+}
+
+$("#tunnel-tip").addEventListener("click", showMazeTip);

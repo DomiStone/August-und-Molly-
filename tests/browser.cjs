@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
+const solvePuzzle = require("./maze-solver.cjs");
 const root = path.resolve(__dirname, "..");
 const results = path.join(root, "test-results");
 fs.mkdirSync(results, { recursive: true });
@@ -30,7 +31,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", types[path.extname(file)] || "text/plain");
   res.setHeader("Cache-Control", "no-cache");
   if (pathname === "/sw.js" && workerRevision) {
-    res.end(fs.readFileSync(file, "utf8").replace("august-molly-edge-maze-v4", "august-molly-edge-maze-v4-test-update"));
+    res.end(fs.readFileSync(file, "utf8").replace("august-molly-puzzle-maze-v5", "august-molly-puzzle-maze-v5-test-update"));
     return;
   }
   fs.createReadStream(file).pipe(res);
@@ -98,13 +99,14 @@ let browser, page;
     await click(id);
     assert.deepEqual(await state("selected"), expected);
   }
-  const ground = await page.evaluate(() => {
+  const findGround = () => page.evaluate(() => {
     for (let y=300;y<450;y+=25) for(let x=300;x<700;x+=25) {
       const e=document.elementFromPoint(x,y);
       if(e?.id==='habitat'||e?.classList.contains('habitat-background'))return {x,y};
     }
     throw Error('No tappable ground');
   });
+  const ground = await findGround();
   const oldPosition=await state('walkers.august.x');
   await page.mouse.click(ground.x, ground.y);
   assert.equal(await state('walkers.molly.tx-walkers.august.tx'),20);
@@ -243,7 +245,9 @@ let browser, page;
     assert.equal(await state("feedings.size"), 0);
   }
   await feed("Paprika", "both");
-  await page.mouse.click(500, 420);
+  // Animals move randomly: a fixed coordinate can hit a pet instead of ground.
+  const interruptGround = await findGround();
+  await page.mouse.click(interruptGround.x, interruptGround.y);
   assert.equal(await state("feedings.size"), 0);
   pass(
     "rapid taps, movement and care interruptions leave no orphan food or timers",
@@ -418,7 +422,7 @@ let browser, page;
   await click('resume');
   for(let i=0;i<60 && !await state('miniGame');i++) await tick(400);
   assert.equal(await state('miniGame.type'),'tunnel');
-  assert.equal(await page.locator('.tunnel-cell').count(),16);
+  assert.equal(await page.locator('.tunnel-cell').count(),25);
   assert.equal(await page.locator('#tunnel-buddy').count(),1);
   assert.equal(await state('world.actions.size'),0);
   await click('mini-close');
@@ -434,9 +438,7 @@ let browser, page;
   await page.screenshot({path:path.join(results,'world-family.png')});
   pass('click cleaning, fresh bedding, social following, usable tunnel, rearrangement and one adopted baby');
   const solveMaze = async (pauseOnFirst = false) => {
-    const maze = await state('miniGame.maze');
-    const queue=[[0]],seen=new Set([0]);let route;
-    while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===15){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+    const route = solvePuzzle(await state('({maze:miniGame.maze,gates:miniGame.gates,items:miniGame.items})'));
     assert.ok(route);
     for(const [index,cell] of route.slice(1).entries()){
       await page.locator(`[data-cell="${cell}"]`).click();
@@ -445,6 +447,8 @@ let browser, page;
     }
     assert.equal(await state('miniGame.phase'),'won');
     assert.equal(await state('miniGame.score'),3);
+    assert.equal(await state('miniGame.inventory'),31);
+    assert.equal(await page.locator('.maze-locked').count(),0);
   };
   await click('companion-menu');await click('tunnel-game');
   assert.equal(await state('feedings.size+companionActions.size+world.actions.size'),0);
@@ -458,12 +462,15 @@ let browser, page;
     }));
   }
   await page.screenshot({path:path.join(results,'world-tunnel-game.png')});
+  await click('tunnel-tip');
+  assert.equal(await page.locator('.maze-hint').count(),1);
+  assert.equal(await state('miniGame.cell'),0, 'A hint must not move the player');
   await solveMaze(true);
   const firstRoute=await state('mazeSolution(miniGame.maze)');
   await click('mini-again');
   assert.notDeepEqual(await state('mazeSolution(miniGame.maze)'),firstRoute);
   await solveMaze();await click('mini-close');
-  pass('randomized connected tunnel maze, real UI solution, pause, reward and replay');
+  pass('25-room key-and-picnic maze, optional hint, real UI collection/unlocking, pause, reward and replay');
   await resetActors();
   await state('world.socialClock=10;world.dirtClock=4;walkers.august.nextNatural=simulationTime+4;walkers.molly.nextNatural=simulationTime+8');
   const idleModes=new Set();
@@ -531,6 +538,10 @@ let browser, page;
     await click('companion-menu');await click('tunnel-game');
     const puzzleBox=await page.locator('#tunnel-puzzle').boundingBox();
     assert.ok(puzzleBox.x>=0 && puzzleBox.y>=0 && puzzleBox.x+puzzleBox.width<=size.width && puzzleBox.y+puzzleBox.height<=size.height);
+    const roomBox = await page.locator('.tunnel-cell').first().boundingBox();
+    assert.ok(roomBox.width >= 43.9 && roomBox.height >= 43.9, 'Maze rooms must remain touch-sized');
+    const closeBox = await page.locator('#mini-close').boundingBox();
+    assert.ok(closeBox.y + closeBox.height <= puzzleBox.y, 'Puzzle must not cover the close button');
     await page.locator('#tunnel-grid img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
     await page.screenshot({path:path.join(results,`tunnel-${size.width}x${size.height}.png`)});
     await click('mini-close');

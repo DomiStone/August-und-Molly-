@@ -120,6 +120,18 @@ hat weiterhin keine Laufzeit-Abhängigkeiten.
   Warteschlange, Pause und Drehung des Bildschirms.
 - Tunnel am Rand: mehrfaches Tippen, Pausieren auf dem Hinweg, Abbrechen und
   gemeinsamer Labyrinthstart ohne übrig gebliebene Aktionen.
-- 16 erreichbare Felder, geänderter Lösungsweg in jeder Runde, Sackgassen und
+- 25 erreichbare Felder, geänderter Lösungsweg in jeder Runde, Sackgassen und
   Zurückgehen, tatsächliches Lösen über die Oberfläche, zwei sichtbare Tiere.
 - Versionierte Dateien und Offline-Neustart/Update weiter im Browsertest.
+
+## Picknick-Rätsel
+- Unabhängiger Zustandsraum-Solver prüft 200 zufällige Labyrinthe sowie sechs
+  Ersatzgenerator-Runden mit konstanter Zufallsquelle auf vollständige Lösbarkeit.
+- Schlüssel liegen vor ihrer eigenen Tür; sieben unterschiedliche Plätze für
+  zwei Schlüssel, zwei Türen und drei Zutaten. Verschlossene Türen blockieren.
+- Das Ziel allein beendet die Runde nicht. Alle Zutaten und Schlüssel sind nötig.
+- Optionaler Ein-Schritt-Tipp, Pause auch im direkten Update, keine neuen Timer.
+- Browser-Test sammelt über echte Klicks Schlüssel/Zutaten, öffnet Türen, pausiert
+  beim Laufen und löst eine zweite neu generierte Runde. Bilder werden dekodiert.
+- Vier Bildschirmgrößen: Räume mindestens 44×44 px, Schließen bleibt zugänglich.
+- Bestehende Pflege-, Fütterungs-, Minispiel-, Speicher- und Offline-Tests bleiben.

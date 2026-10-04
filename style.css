@@ -1073,13 +1073,19 @@ button:hover:not(:disabled) {
 #tunnel-puzzle { position: absolute; top: 105px; left: 50%; transform: translateX(-50%); width: min(320px, 86vw); padding: 12px; border-radius: 22px; background: #fffbee; color: #435836; pointer-events: auto; box-shadow: 0 8px 30px #38281830; }
 #tunnel-puzzle h2 { font-size: 18px; margin: 0 0 4px; text-align: center; }
 #tunnel-hint { font-size: 12px; text-align: center; margin: 0 0 10px; min-height: 30px; }
-#tunnel-grid { display: grid; position: relative; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: min(270px, 43vh); aspect-ratio: 1; margin: auto; background: #b89667; border-radius: 12px; overflow: hidden; }
-.tunnel-cell { border: 6px solid #755c3c; border-radius: 0; padding: 0; background: #d6b98a; font-size: 24px; min-width: 0; min-height: 0; }
+#tunnel-grid { display: grid; position: relative; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); width: min(270px, 100%); aspect-ratio: 1; margin: auto; background: #b89667; border-radius: 12px; overflow: hidden; }
+.tunnel-cell { border: 4px solid #755c3c; border-radius: 0; padding: 0; background: #d6b98a; color: #352715; font-size: 18px; font-weight: 700; min-width: 0; min-height: 0; }
+.tunnel-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 6px; font-size: 11px; }
+#tunnel-tip { min-height: 44px; padding: 4px 8px; border-radius: 12px; background: #e0e7b1; font-size: 13px; color: #34452a; }
+.tunnel-cell.maze-hint { outline: 3px solid #326737; outline-offset: -7px; }
+.tunnel-cell.maze-locked { background: #f2c692; }
 .tunnel-cell.visited { background: #e9cf96; }
 .tunnel-cell:not(:disabled) { background: #e0e7b1; cursor: pointer; }
-#tunnel-token, #tunnel-buddy { position: absolute; z-index: 2; width: 18%; height: auto; aspect-ratio: 1; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; }
-#tunnel-buddy { width: 15%; }
+#tunnel-token, #tunnel-buddy { position: absolute; z-index: 2; width: 14%; height: auto; aspect-ratio: 1; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; }
+#tunnel-buddy { width: 12%; }
 .in-tunnel-game .mini-controls { bottom: 15px; }
+.in-tunnel-game #mini-again { width: 44px; height: 44px; font-size: 28px; border-radius: 14px; }
+.in-tunnel-game #mini-close { width: 44px; height: 44px; font-size: 24px; }
 .in-tunnel-game #reaction { display: none; }
 @media (max-width: 700px) {
   #tunnel-puzzle { top: 150px; }
@@ -1087,7 +1093,7 @@ button:hover:not(:disabled) {
 }
 @media (max-height: 500px) {
   #tunnel-puzzle { top: 65px; padding: 8px; }
-  #tunnel-grid { width: min(220px, 40vh); }
+  #tunnel-grid { width: 220px; }
   #tunnel-puzzle h2 { font-size: 15px; }
   #tunnel-hint { font-size: 11px; min-height: 26px; margin-bottom: 5px; }
 }
