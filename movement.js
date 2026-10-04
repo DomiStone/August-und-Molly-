@@ -371,7 +371,7 @@ $("#habitat").addEventListener("click", (e) => {
     paused ||
     searchActive ||
     (typeof miniGame !== "undefined" && miniGame) ||
-    e.target.closest("button,nav,.top-tools,.cozy-panel")
+    e.target.closest("button,nav,.top-tools,.cozy-panel,.play-menu,.extra-game")
   )
     return;
   closeFood();

@@ -100,10 +100,9 @@ diesen Knopf muss zunächst online geöffnet werden, um das Update herunterzulad
 - Ein Spieltag beginnt bei der lokalen Tageszeit und dauert etwa zwölf aktive
   Spielminuten. Sanfte Lichtstimmung und Ruhe-Wahrscheinlichkeiten ändern sich;
   die Zeit steht während Pause/Abwesenheit still. Kein biologisch exaktes Modell.
-- Nach drei Album-Stickern kann **Fips** einziehen: genau ein Jungtier, das
-  Erwachsenen folgt, ihre Fress-/Ruheaktionen imitiert und auf Begrüßung reagiert.
-  Fips nutzt verkleinerte vorhandene Grafiken und ist bewusst kein drittes separat
-  zu verwaltendes Tier. Seine Pflege gehört zur Familie; keine Fortpflanzung.
+- Über ⚽ → 🐹 können weitere Jungtiere ohne Sticker- oder Ein-Tier-Sperre
+  adoptiert werden. Je sechs Freunde teilen sich eine umblätterbare Wiesenseite;
+  alle bleiben gespeichert. Ihre Versorgung gehört zur Familie; keine Fortpflanzung.
 
 Der Spieltunnel steht am Gehegerand. Antippen schickt die gewählten Tiere zur
 Öffnung und startet **Tunnelpfade**. Bei beiden ausgewählten Tieren laufen beide
@@ -116,8 +115,8 @@ genau einen hilfreichen Nachbarraum, ohne die Tiere automatisch zu bewegen.
 Offene Nachbarräume antippen, zurückgehen oder neu spielen – ohne
 Zeitdruck. Der vorhandene Hüpfparcours hat jetzt deutlich niedrigere Sprünge.
 
-Spielstand-Schema 2 übernimmt bestehende Schema-1-Spielstände. Gespeichert werden
-zusätzlich Vorräte, Schmutz, Spielzeit, Einrichtung und die einmalige Adoption;
+Spielstand-Schema 3 übernimmt Schema-1-/2-Spielstände einschließlich Fips.
+Gespeichert werden Vorräte, Schmutz, Spielzeit, Einrichtung und die Familie;
 nie aktive Aktionen oder Callback-Funktionen. Gerätespeicher kann weiterhin
 gesperrt sein, ohne das Spiel zu verhindern. Sämtliche Sounds werden lokal
 synthetisiert und sind standardmäßig aus; keine Audio-Downloads oder SDKs.
@@ -148,6 +147,23 @@ Der Tunnel bleibt auch beim Umstellen an einem Randplatz. Jeder neue Start und
 jede Wiederholung erhält einen anderen Lösungsweg. Nach zwölf erfolglosen
 Zufallsversuchen sorgt ein begrenzter Ersatzgenerator für einen anderen Weg.
 
-Direkter aktualisierter Start: `index.html?v=puzzle-maze-v5`. HTML, CSS und Skripte
+Direkter aktualisierter Start: `index.html?v=playball-family-v6`. HTML, CSS und Skripte
 verwenden dieselbe Versionskennung, damit ältere Offline-Worker beim Öffnen
 dieses Links keine veralteten Skripte dazumischen. Spielstände werden erhalten.
+
+### Spielball und wachsende Familie
+Der ⚽ unten rechts und der Weidenball öffnen dasselbe Bildermenü: Spiele,
+Futter, Kuscheln, Zuhause, Familie und Extras. Große Bildbuttons haben ergänzende
+Kurztexte und Screenreader-Namen. Alle Buchaktionen sind hier erreichbar;
+die vier bisherigen Pflegeknöpfe wurden für mehr Platz in das Menü integriert.
+
+Neu: Gemüse-Memory mit drei Paaren, Gemüse-Fangen mit wechselnden Suchbildern
+und das Wiesen-Orchester mit vorgemachten, nachspielbaren Bildfolgen. Fehler
+kosten keine Leben. Alle Abläufe verwenden die vorhandene pausierbare Spieluhr.
+
+Babys wachsen nach acht aktiven Spielminuten oder durch den Bildbutton mit
+kleinem und großem Tier. Erwachsene Familienfreunde erkunden eigenständiger,
+Jungtiere folgen und imitieren. Polonaise und gelegentliche Quatschmomente
+ergänzen das Gehege. Es gibt kein künstliches Adoptionslimit; die Kapazität des
+Gerätespeichers bleibt die praktische Grenze. Nur sechs zusätzliche Tiere
+werden gleichzeitig animiert, auch bei einer großen gespeicherten Familie.

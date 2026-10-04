@@ -7,12 +7,7 @@ function hideGames() {
   $("#games").setAttribute("aria-expanded", false);
 }
 $("#games").addEventListener("click", () => {
-  if (paused) return;
-  if (typeof closeCompanionPanel === "function") closeCompanionPanel(false);
-  closeFood();
-  const show = $("#games-drawer").hidden;
-  $("#games-drawer").hidden = !show;
-  $("#games").setAttribute("aria-expanded", show);
+  if (typeof togglePlayMenu === "function") togglePlayMenu();
 });
 function starDisplay(score) {
   $$(".mini-stars span").forEach((s, i) => {
@@ -23,6 +18,7 @@ function starDisplay(score) {
 function endMiniGame() {
   if (!miniGame) return;
   if (typeof closeTunnelPuzzle === "function") closeTunnelPuzzle();
+  if (typeof closeExtraGame === "function") closeExtraGame();
   miniGame = null;
   $("#mini-ui").hidden = true;
   document.body.classList.remove("in-minigame");
@@ -60,6 +56,7 @@ function startMiniGame(type, ids = selected) {
   $("#mini-again").hidden = true;
   starDisplay(0);
   if (type === "tunnel") { prepareTunnelPuzzle(); return; }
+  if (["memory", "catch", "orchestra"].includes(type)) { prepareExtraGame(); return; }
   if (type === "jump") prepareJump();
   else {
     for (const [id, w] of Object.entries(walkers)) {
@@ -163,6 +160,7 @@ function stepMiniGame(dt) {
   const g = miniGame;
   if (!g) return;
   if (g.type === "tunnel") { stepTunnelPuzzle(dt); return; }
+  if (["memory", "catch", "orchestra"].includes(g.type)) { stepExtraGame(dt); return; }
   g.lock = Math.max(0, g.lock - dt);
   if (g.type === "jump" && g.phase === "jumping") {
     g.timer += dt;

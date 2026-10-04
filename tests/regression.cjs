@@ -100,7 +100,7 @@ const context = vm.createContext({
     throw Error("Unowned interval added");
   },
 });
-for (const name of ["game", "food-view", "feeding", "movement", "minigames", "companions", "world", "tunnel-game"])
+for (const name of ["game", "food-view", "feeding", "movement", "minigames", "extra-games", "companions", "family", "world", "tunnel-game", "play-menu"])
   vm.runInContext(fs.readFileSync(name + ".js", "utf8"), context, {
     filename: name + ".js",
   });
@@ -318,6 +318,7 @@ assert.equal(run("world.dirt.size"),0);
 assert.equal(run("memories.has('clean')"),true);
 el('#adopt-baby').click();el('#adopt-baby').click();
 assert.equal(run("world.baby"),true);
+assert.equal(run("family.members.length"),2);
 step(3);
 assert.ok(run("Number.isFinite(baby.x) && Number.isFinite(baby.y)"));
 let lastRoute;
@@ -379,3 +380,63 @@ assert.equal(run("miniGame.ids.length"),2);
 run("endMiniGame();startTunnelAdventure();sendPet('august',30,60)");step(20);
 assert.equal(run("miniGame"),null,'canceled entrance must not open a game later');
 console.log('PASS: changed maze solution every round, paused entrance, two-pet tunnel launch, cancellation.');
+
+run("endMiniGame();startMiniGame('memory')");
+run("playExtraMove(0);playExtraMove(0)");
+assert.equal(run("miniGame.open.length"),1, 'A card cannot match itself');
+const different = run("miniGame.cards.findIndex(card=>card!==miniGame.cards[0])");
+run(`playExtraMove(${different});setPause(true)`);
+const peekTimer = run("miniGame.timer");
+run("stepExtraGame(20)");
+assert.equal(run("miniGame.timer"),peekTimer);
+run("setPause(false);stepExtraGame(2)");
+assert.equal(run("miniGame.open.length"),0);
+const deck = JSON.parse(run("JSON.stringify(miniGame.cards)"));
+for (const value of new Set(deck)) {
+  const pair = deck.flatMap((card,i)=>card===value?[i]:[]);
+  run(`playExtraMove(${pair[0]});playExtraMove(${pair[1]})`);
+}
+assert.equal(run("miniGame.phase"),'won');
+run("startMiniGame('catch')");
+for (let i=0;i<6;i++) {
+  run("playExtraMove(miniGame.cards.indexOf(miniGame.targetFood))");
+  const count=run("miniGame.collected");
+  run("playExtraMove(miniGame.cards.indexOf(miniGame.targetFood))");
+  assert.equal(run("miniGame.collected"),count);
+  run("stepExtraGame(.6)");
+}
+assert.equal(run("miniGame.phase"),'won');
+run("startMiniGame('orchestra');stepExtraGame(5);playExtraMove((miniGame.sequence[0]+1)%3)");
+assert.equal(run("miniGame.phase"),'showing');
+for (let round=0;round<3;round++) {
+  run("stepExtraGame(6)");
+  const notes=JSON.parse(run("JSON.stringify(miniGame.sequence)"));
+  for(const note of notes) run(`playExtraMove(${note})`);
+  run("stepExtraGame(1.1)");
+}
+assert.equal(run("miniGame.phase"),'won');
+run("endMiniGame();restoreFamily(null,false)");
+for(let i=0;i<25;i++) run("adoptFamilyMember()");
+assert.equal(run("family.members.length"),25);
+assert.ok(run("family.visible.length")<=6);
+assert.equal(run("new Set(family.members.map(m=>m.id)).size"),25);
+run("setPause(true)");
+const familyTime=run("family.time");
+run("stepFamily(500);adoptFamilyMember();growFamilyMember()");
+assert.equal(run("family.time"),familyTime);
+assert.equal(run("family.members.length"),25);
+run("setPause(false);growFamilyMember()");
+assert.equal(run("family.members.find(m=>m.id===family.selectedId).adult"),true);
+run("changeFamilyPage(-1);stepFamily(481)");
+assert.equal(run("family.visible.every(a=>a.member.adult)"),true);
+run("globalThis.savedFamily=familySnapshot();restoreFamily(globalThis.savedFamily,false)");
+assert.equal(run("family.members.length"),25);
+assert.ok(run("family.visible.length")<=6);
+run("restoreFamily({members:[{id:1,age:999},{id:1},{id:-2},{id:2,skin:'<script>',age:NaN}]},false)");
+assert.equal(run("family.members.length"),2);
+assert.equal(run("family.members[1].skin"),'august');
+run("togglePlayMenu();showPlaySection('food');runPlayAction('refill')");
+assert.equal(run("water"),100);
+for (const action of ['home','scratch','cuddle','popcorn','nap','refill-hay','clean-enclosure','adopt-baby','house-sleep','move-ball','move-tunnel','bedding-style','toggle-flowers','together','call-pets','update-game','memory','catch','orchestra'])
+  assert.ok(run(`playSections.some(section=>section.actions.some(entry=>entry[0]===${JSON.stringify(action)}))`), action+' must be reachable in pictures');
+console.log('PASS: memory mismatch/self-match/pause, catching repeat taps, orchestra retry/reward, 25 unique family members, bounded visible actors, growth, migration and picture actions.');

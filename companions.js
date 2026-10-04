@@ -19,6 +19,10 @@ const MOMENTS = {
   friends: { icon: "🐾", title: "Beste Freunde", hint: "Gemeinsam das Gehege erkunden" },
   tunnel: { icon: "🍀", title: "Tunnelspürnasen", hint: "Den Weg durchs Tunnelspiel finden" },
   baby: { icon: "🐹", title: "Willkommen, Fips", hint: "Ein Jungtier im Gehege willkommen heißen" },
+  memory: { icon: "🃏", title: "Gemüsepaare", hint: "Drei gleiche Gemüsepaare entdecken" },
+  catch: { icon: "🧺", title: "Erntefreunde", hint: "Sechs passende Gemüsestücke sammeln" },
+  orchestra: { icon: "🎶", title: "Wiesenmusik", hint: "Drei kleine Melodien nachspielen" },
+  grown: { icon: "🎂", title: "Groß geworden", hint: "Ein Jungtier wächst heran" },
 };
 const companionActions = new Map();
 const ballPlaces = [{ x: 46, y: 76 }, { x: 33, y: 52 }, { x: 65, y: 55 }];
@@ -40,9 +44,9 @@ function restoreCompanions() {
     const raw = localStorage.getItem(COMPANION_SAVE_KEY);
     if (!raw) return;
     // Avoid parsing unexpectedly large or unrelated values.
-    if (raw.length > 12000) return;
+    if (raw.length > 5000000) return;
     const saved = JSON.parse(raw);
-    if (!saved || ![1, 2].includes(saved.version)) return;
+    if (!saved || ![1, 2, 3].includes(saved.version)) return;
     pendingWorldSave = saved.world || null;
     for (const [id, p] of Object.entries(pets)) {
       for (const key of ["food", "water", "joy", "energy", "enrichment"])
@@ -63,7 +67,7 @@ function restoreCompanions() {
 
 function saveCompanions() {
   try {
-    const snapshot = { version: 2, pets: {}, water, memories: [...memories], ballPlace, flowers,
+    const snapshot = { version: 3, pets: {}, water, memories: [...memories], ballPlace, flowers,
       world: typeof worldSnapshot === "function" ? worldSnapshot() : pendingWorldSave };
     for (const [id, p] of Object.entries(pets)) {
       snapshot.pets[id] = {};
@@ -356,7 +360,7 @@ refreshCompanionUi();
 update();
 saveCompanions();
 if (!memories.size) {
-  cozyNotice("Tippe auf Wiese, Ball, Tränke oder Heu. Im 📖 entdeckt ihr euer Gehege.");
+  cozyNotice("⚽ Alles im Spielball: spielen, kuscheln, versorgen und neue Freunde finden!");
   noticeClock = 10;
 }
 $("#companion-menu").addEventListener("click", () => {
@@ -372,7 +376,7 @@ $("#companion-menu").addEventListener("click", () => {
 $("#companion-close").addEventListener("click", () => closeCompanionPanel());
 $("#nap").addEventListener("click", () => useCompanionActivity("napping"));
 $("#play-ball").addEventListener("click", () => useCompanionActivity("playing"));
-$("#willow-ball").addEventListener("click", () => useCompanionActivity("playing"));
+$("#willow-ball").addEventListener("click", () => togglePlayMenu());
 $("#drink-bowl").addEventListener("click", () => useCompanionActivity("drinking"));
 $("#call-pets").addEventListener("click", () => {
   if (paused) return;
