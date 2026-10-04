@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const assert = require("node:assert/strict");
 const path = require("node:path");
+const solvePuzzle = require("./maze-solver.cjs");
 process.chdir(path.join(__dirname, ".."));
 
 class Element {
@@ -320,28 +321,53 @@ assert.equal(run("world.baby"),true);
 step(3);
 assert.ok(run("Number.isFinite(baby.x) && Number.isFinite(baby.y)"));
 let lastRoute;
-for(let trial=0;trial<30;trial++){
+for(let trial=0;trial<200;trial++){
   const maze=JSON.parse(run("JSON.stringify(makeTunnelMaze())"));
   const visited=new Set([0]), queue=[0];
   while(queue.length)for(const neighbor of maze[queue.shift()])if(!visited.has(neighbor)){visited.add(neighbor);queue.push(neighbor);}
-  assert.equal(visited.size,16);
+  assert.equal(visited.size,25);
+  const riddles = JSON.parse(run(`JSON.stringify(makeMazeRiddles(${JSON.stringify(maze)}))`));
+  assert.equal(new Set([...riddles.items, ...riddles.gates].map(item => item.cell)).size, 7);
+  assert.ok(riddles.items.every(item => Number.isInteger(item.cell) && item.cell > 0 && item.cell < 24));
+  assert.ok(solvePuzzle({maze, ...riddles}), 'Every key and ingredient must be reachable in order');
   const routeKey=run("previousMazeRoute");
   assert.notEqual(routeKey,lastRoute);
   lastRoute=routeKey;
 }
 run("startMiniGame('tunnel')");
-const maze=JSON.parse(run("JSON.stringify(miniGame.maze)"));
-const queue=[[0]], seen=new Set([0]);let route;
-while(queue.length){const path=queue.shift(),cell=path.at(-1);if(cell===15){route=path;break;}for(const next of maze[cell])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+run("miniGame.cell=MAZE_GOAL;miniGame.to=MAZE_GOAL;miniGame.phase='travelling';miniGame.timer=0");
+step(.8);
+assert.equal(run("miniGame.phase"), 'ready', 'Finding the exit without the picnic must not win');
+run("miniGame.cell=0;moveThroughMaze(miniGame.maze[0][0]);setPause(true)");
+const mazeTimer = run("miniGame.timer");
+run("stepTunnelPuzzle(20)");
+assert.equal(run("miniGame.timer"), mazeTimer);
+run("setPause(false)");step(.8);
+run("startMiniGame('tunnel')");
+run("miniGame.cell=miniGame.maze[miniGame.gates[0].cell][0]");
+const beforeDoor = run("miniGame.cell");
+run("moveThroughMaze(miniGame.gates[0].cell)");step(.8);
+assert.equal(run("miniGame.cell"), beforeDoor, 'A locked door must block travel');
+run("miniGame.cell=0;showMazeTip()");
+assert.ok(run("miniGame.maze[0].includes(miniGame.hintCell)"));
+const route = solvePuzzle(JSON.parse(run("JSON.stringify({maze:miniGame.maze,gates:miniGame.gates,items:miniGame.items})")));
 for(const cell of route.slice(1)){run(`moveThroughMaze(${cell})`);step(.8);}
 assert.equal(run("miniGame.phase"),'won');
 assert.equal(run("miniGame.score"),3);
 assert.equal(run("memories.has('tunnel')"),true);
+run("endMiniGame();globalThis.savedMazeRandom=Math.random;Math.random=()=>0");
+for (let trial=0; trial<6; trial++) {
+  run("startMiniGame('tunnel')");
+  const puzzle = JSON.parse(run("JSON.stringify({maze:miniGame.maze,gates:miniGame.gates,items:miniGame.items})"));
+  assert.ok(solvePuzzle(puzzle), 'Constant-random fallback remains solvable');
+  run("endMiniGame()");
+}
+run("Math.random=globalThis.savedMazeRandom");
 run("endMiniGame();restoreWorld({hay:-4,baby:true,dirt:Array.from({length:20},()=>({x:900,y:-50})),bedding:99})");
 assert.equal(run("world.hay"),0);
 assert.ok(run("world.dirt.size")<=6);
 assert.equal(run("world.bedding"),2);
-console.log("PASS: thirst/resource chain, serialized bottle, empty/refill, reserved hay bites/cancel, house sleep/wake, social ownership, tunnel, cleaning/pause, one baby, 30 solvable mazes and save validation.");
+console.log("PASS: thirst/resource chain, serialized bottle, empty/refill, reserved hay bites/cancel, house sleep/wake, social ownership, tunnel, cleaning/pause, one baby, 200 solvable key-and-picnic puzzles, locked doors, hints and save validation.");
 
 run("endMiniGame();selected=['august','molly'];startTunnelAdventure();startTunnelAdventure()");
 assert.equal(run("world.actions.size"),2);

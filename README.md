@@ -108,8 +108,12 @@ diesen Knopf muss zunächst online geöffnet werden, um das Update herunterzulad
 Der Spieltunnel steht am Gehegerand. Antippen schickt die gewählten Tiere zur
 Öffnung und startet **Tunnelpfade**. Bei beiden ausgewählten Tieren laufen beide
 zusammen durch die Räume. Selbstständiges Erkunden öffnet kein Minispiel.
-`tunnel-game.js` erzeugt verbundene 4×4-Labyrinthe mit garantiert erreichbarem
-Gemüseziel. Offene Nachbarräume antippen, zurückgehen oder neu spielen – ohne
+`tunnel-game.js` erzeugt verbundene 5×5-Labyrinthe mit garantiert erreichbarem
+Picknickziel. Zwei passende Schlüssel öffnen die Türen A und B. Drei Zutaten
+liegen bevorzugt in Sackgassen und Seitengängen. Erst mit beiden Schlüsseln und
+allen Zutaten ist das Picknick am Ziel vollständig. Ein optionaler Tipp markiert
+genau einen hilfreichen Nachbarraum, ohne die Tiere automatisch zu bewegen.
+Offene Nachbarräume antippen, zurückgehen oder neu spielen – ohne
 Zeitdruck. Der vorhandene Hüpfparcours hat jetzt deutlich niedrigere Sprünge.
 
 Spielstand-Schema 2 übernimmt bestehende Schema-1-Spielstände. Gespeichert werden
@@ -144,6 +148,6 @@ Der Tunnel bleibt auch beim Umstellen an einem Randplatz. Jeder neue Start und
 jede Wiederholung erhält einen anderen Lösungsweg. Nach zwölf erfolglosen
 Zufallsversuchen sorgt ein begrenzter Ersatzgenerator für einen anderen Weg.
 
-Direkter aktualisierter Start: `index.html?v=edge-maze-v4`. HTML, CSS und Skripte
+Direkter aktualisierter Start: `index.html?v=puzzle-maze-v5`. HTML, CSS und Skripte
 verwenden dieselbe Versionskennung, damit ältere Offline-Worker beim Öffnen
 dieses Links keine veralteten Skripte dazumischen. Spielstände werden erhalten.
