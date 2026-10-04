@@ -96,7 +96,7 @@ Neue Zustands- und Browserprüfungen:
 - Müdigkeit → Tür → Schlaf → Energie → Aufwachen/Fenster → Ausgehen; Pause und
   Eingriffe während dieser Phasen.
 - Gemeinsames Folgen, Unterbrechen beider Partner ohne verwaiste Zustände,
-  Gehege-Tunnel, Umstellen, Reinigung und Baby-Adoption mit Maximalzahl eins.
+  Gehege-Tunnel, Umstellen, Reinigung und wiederholbare Baby-Adoption.
 - 30 generierte Labyrinthe auf vollständige Erreichbarkeit; echte UI-Lösung,
   Pause in der Bewegung, Belohnung, Wiederholung und kleine Bildschirme.
 - Zwei Minuten unbeaufsichtigte Browser-Simulation, begrenzte Verschmutzung,
@@ -104,8 +104,8 @@ Neue Zustands- und Browserprüfungen:
 - Schema-1-Migration, Schema-2-Speichern, Offline-Neustart und tatsächlicher
   Service-Worker-Update-Handschlag ohne automatische Unterbrechung des Spiels.
 
-Bewusst begrenzt: Fips ist ein begleitendes Jungtier mit vorhandenen verkleinerten
-Assets, kein separat auswählbarer dritter Erwachsener. Kein Baueditor oder neue
+Familienfreunde nutzen die vorhandenen Assets und werden gemeinsam versorgt.
+Sie sind auswählbar und wachsen; je sechs sind sichtbar. Kein Baueditor oder neue
 Landkarte; Einrichtung wird auf geprüfte Plätze gesetzt. Keine Kamera-/Mikrofon-
 Reaktionen: Geräuschreaktionen werden durch eigene Spielaktionen ausgelöst.
 
@@ -135,3 +135,15 @@ hat weiterhin keine Laufzeit-Abhängigkeiten.
   beim Laufen und löst eine zweite neu generierte Runde. Bilder werden dekodiert.
 - Vier Bildschirmgrößen: Räume mindestens 44×44 px, Schließen bleibt zugänglich.
 - Bestehende Pflege-, Fütterungs-, Minispiel-, Speicher- und Offline-Tests bleiben.
+
+## Spielball und Familie (Schema 3)
+- Sechs Bildbereiche, alle bisherigen Buchaktionen erreichbar, große Touchbuttons.
+- Memory: keine Selbstpaare, Fehlversuch, Pause, drei Paare, Wiederholung.
+- Gemüse-Fangen: korrekte Auswahl, kein Doppelzählen bei schnellem Tippen.
+- Orchester: langsames Vormachen, falsche Note, Wiederholung, drei Runden.
+- 25 Adoptionen ohne Spiel-Limit, eindeutige IDs, maximal sechs animierte Freunde;
+  Familienseiten, manuelles/automatisches Wachstum, Pause und validiertes Laden.
+- Browser: acht Adoptionen über das Bildermenü, Seitenwechsel und Wachstum;
+  neue Spiele über echte Buttons lösen, alte Regressionen unverändert erhalten.
+- Schema 1/2 bleibt lesbar, alte Fips-Adoption wird zu Familienmitglied 1.
+- Keine neuen Timer, Netzwerk-SDKs oder Nutzerkonten.

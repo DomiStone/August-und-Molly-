@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#547247" />
     <title>August & Molly</title>
     <link rel="icon" href="assets/august-walk.webp" />
-    <link rel="stylesheet" href="style.css?v=puzzle-maze-v5" />
+    <link rel="stylesheet" href="style.css?v=playball-family-v6" />
   </head>
   <body>
     <main
@@ -61,6 +61,7 @@
       <div id="sleep-august" class="house-dream" hidden aria-hidden="true">z Z 🥕</div>
       <div id="sleep-molly" class="house-dream" hidden aria-hidden="true">z Z 🥒</div>
       <button id="baby" class="baby-pet" hidden aria-label="Fips begrüßen"><img src="assets/august.png" alt="Jungtier Fips"><span class="baby-walk" aria-hidden="true"></span></button>
+      <div id="family-layer" aria-label="Weitere Familienfreunde"></div>
       <div id="flower-garland" hidden aria-hidden="true">🌼 🌿 🌼 🌿 🌼</div>
       <p id="cozy-notice" role="status" aria-live="polite" hidden></p>
       <div id="reaction" aria-hidden="true"></div>
@@ -113,7 +114,7 @@
         </button>
       </div>
       <aside id="companion-panel" class="cozy-panel" aria-label="Mein Gehege" hidden>
-        <header><div><small>August & Molly · Picknick-Rätsel</small><h1>Mein Gehege</h1></div><button id="companion-close" aria-label="Gehege-Menü schließen">✕</button></header>
+        <header><div><small>August & Molly · Spielball und Familie</small><h1>Mein Gehege</h1></div><button id="companion-close" aria-label="Gehege-Menü schließen">✕</button></header>
         <p class="cozy-intro">Kleine Freunde, große Lieblingsmomente. Alles in eurem Tempo.</p>
         <div id="companion-cards"></div>
         <h2>Zeit zusammen</h2>
@@ -135,7 +136,7 @@
           <button id="move-tunnel">🍀<span>Tunnel umstellen</span></button>
           <button id="bedding-style">🍃<span>Kuschelfarbe</span></button>
           <button id="tunnel-game">🌀<span>Tunnelpfade</span></button>
-          <button id="adopt-baby">🐹<span>Fips aufnehmen</span></button>
+          <button id="adopt-baby">🐹➕<span>Baby aufnehmen</span></button>
         </div>
         <p id="family-status" class="cozy-intro"></p>
         <p class="cozy-intro">August schläft gern am linken Fenster, Molly am rechten. Köttel kannst du direkt antippen. Alle Vorräte und Fortschritte bleiben auf diesem Gerät.</p>
@@ -221,13 +222,13 @@
         ><button
           class="round big"
           id="games"
-          aria-label="Minispiele auswählen"
+          aria-label="Spielball: alle Spiele und Funktionen als Bilder"
           aria-expanded="false"
           aria-controls="games-drawer"
         >
-          🎲
+          ⚽
         </button>
-        <div id="games-drawer" class="games-drawer" hidden>
+        <div id="legacy-games" hidden>
           <button
             class="round big"
             id="hurdle-game"
@@ -250,6 +251,15 @@
           </button>
         </div>
       </nav>
+      <aside id="games-drawer" class="play-menu" aria-label="Spielball – Bildermenü" hidden>
+        <header><strong>⚽ Spielball</strong><button id="play-menu-close" aria-label="Spielball schließen">✕</button></header>
+        <nav id="play-tabs" aria-label="Bildbereiche"></nav>
+        <div id="play-actions"></div>
+        <section id="family-picker" hidden aria-label="Meerschweinchen-Familie">
+          <div id="family-cards"></div>
+          <div class="family-pages"><button id="family-prev" aria-label="Vorige Familienseite">◀</button><span id="family-page" role="status"></span><button id="family-next" aria-label="Nächste Familienseite">▶</button></div>
+        </section>
+      </aside>
       <div
         class="search-progress"
         id="search-progress"
@@ -259,6 +269,11 @@
         <span>🥬</span><span>🥒</span><span>🫑</span>
       </div>
       <div id="mini-ui" hidden>
+        <section id="extra-game" class="extra-game" hidden aria-label="Mitmachspiel">
+          <h2 id="extra-title"></h2><p id="extra-cue" role="status"></p>
+          <div id="extra-board"></div>
+          <button id="extra-help" aria-label="Melodie noch einmal vormachen" hidden>👀 🎵 ↻</button>
+        </section>
         <section id="tunnel-puzzle" hidden aria-label="Tunnelpfade">
           <h2>Das Picknick-Labyrinth</h2>
           <p id="tunnel-hint" role="status">Sammle Schlüssel und Zutaten für das Picknick.</p>
@@ -314,14 +329,17 @@
       </div>
       <p id="message" class="sr-only" role="status" aria-live="polite"></p>
     </main>
-    <script src="game.js?v=puzzle-maze-v5"></script>
-    <script src="food-view.js?v=puzzle-maze-v5"></script>
-    <script src="feeding.js?v=puzzle-maze-v5"></script>
-    <script src="movement.js?v=puzzle-maze-v5"></script>
-    <script src="minigames.js?v=puzzle-maze-v5"></script>
-    <script src="companions.js?v=puzzle-maze-v5"></script>
-    <script src="world.js?v=puzzle-maze-v5"></script>
-    <script src="tunnel-game.js?v=puzzle-maze-v5"></script>
-    <script src="offline.js?v=puzzle-maze-v5"></script>
+    <script src="game.js?v=playball-family-v6"></script>
+    <script src="food-view.js?v=playball-family-v6"></script>
+    <script src="feeding.js?v=playball-family-v6"></script>
+    <script src="movement.js?v=playball-family-v6"></script>
+    <script src="minigames.js?v=playball-family-v6"></script>
+    <script src="extra-games.js?v=playball-family-v6"></script>
+    <script src="companions.js?v=playball-family-v6"></script>
+    <script src="family.js?v=playball-family-v6"></script>
+    <script src="world.js?v=playball-family-v6"></script>
+    <script src="tunnel-game.js?v=playball-family-v6"></script>
+    <script src="play-menu.js?v=playball-family-v6"></script>
+    <script src="offline.js?v=playball-family-v6"></script>
   </body>
 </html>

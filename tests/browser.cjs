@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Content-Type", types[path.extname(file)] || "text/plain");
   res.setHeader("Cache-Control", "no-cache");
   if (pathname === "/sw.js" && workerRevision) {
-    res.end(fs.readFileSync(file, "utf8").replace("august-molly-puzzle-maze-v5", "august-molly-puzzle-maze-v5-test-update"));
+    res.end(fs.readFileSync(file, "utf8").replace("august-molly-playball-family-v6", "august-molly-playball-family-v6-test-update"));
     return;
   }
   fs.createReadStream(file).pipe(res);
@@ -80,8 +80,88 @@ let browser, page;
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   const tick = (ms) => page.clock.runFor(ms);
-  const click = (id) => page.locator("#" + id).click();
+  const click = async (id) => {
+    const original = page.locator("#" + id);
+    if (await original.isVisible()) return original.click();
+    const section = await page.evaluate(id => playSections.find(section => section.actions.some(action => action[0] === id))?.id, id);
+    assert.ok(section, 'No visible control or picture shortcut for ' + id);
+    if (!await page.locator('#games-drawer').isVisible()) await page.locator('#games').click();
+    await page.locator('#play-tab-' + section).click();
+    await page.locator('#play-action-' + id).click();
+  };
   const state = (expr) => page.evaluate(expr);
+  // New picture-first flows are exercised before the longer care regressions.
+  await click('games');
+  assert.equal(await page.locator('#play-tabs button').count(),6);
+  for (const section of ['games','food','care','home','family','settings']) {
+    await click('play-tab-'+section);
+    const controls=page.locator('#play-actions button');
+    assert.ok(await controls.count()>=3);
+    for (const button of await controls.all()) {
+      const box=await button.boundingBox();
+      assert.ok(box.width>=44 && box.height>=44);
+      assert.ok(await button.locator('.action-picture').innerHTML());
+    }
+  }
+  await click('play-tab-games');
+  await page.screenshot({path:path.join(results,'playball-games.png')});
+  await click('play-action-memory');
+  const deck=await state('miniGame.cards');
+  const mismatch=deck.findIndex(card=>card!==deck[0]);
+  await page.locator('[data-extra="0"]').click();
+  await page.locator(`[data-extra="${mismatch}"]`).click();
+  await click('pause');
+  const peek=await state('miniGame.timer');
+  await tick(3000);
+  assert.equal(await state('miniGame.timer'),peek);
+  await click('resume');await tick(1300);
+  for(const food of new Set(deck)) {
+    for(const i of deck.flatMap((value,i)=>value===food?[i]:[])) await page.locator(`[data-extra="${i}"]`).click();
+  }
+  assert.equal(await state('miniGame.phase'),'won');
+  await page.screenshot({path:path.join(results,'memory-won.png')});
+  await click('mini-again');
+  assert.equal(await state('miniGame.matched.size'),0);
+  await click('mini-close');
+  await click('catch');
+  for(let i=0;i<6;i++) {
+    const target=await state('miniGame.cards.indexOf(miniGame.targetFood)');
+    await page.locator(`[data-extra="${target}"]`).click();
+    await tick(600);
+  }
+  assert.equal(await state('miniGame.phase'),'won');
+  await click('mini-close');await click('orchestra');
+  await tick(2300);
+  const wrong=await state('(miniGame.sequence[0]+1)%3');
+  await page.locator(`[data-extra="${wrong}"]`).click();
+  assert.equal(await state('miniGame.phase'),'showing');
+  for(let round=0;round<3;round++) {
+    await tick(5000);
+    const notes=await state('miniGame.sequence');
+    for(const note of notes) await page.locator(`[data-extra="${note}"]`).click();
+    await tick(1100);
+  }
+  assert.equal(await state('miniGame.phase'),'won');
+  await click('mini-close');
+  await click('games');await click('play-tab-family');
+  for(let i=0;i<8;i++) await click('play-action-adopt-baby');
+  assert.equal(await state('family.members.length'),8);
+  assert.equal(await state('family.page'),1);
+  assert.equal(await page.locator('.family-pet').count(),2);
+  assert.equal(await page.locator('#games-drawer').isVisible(),true);
+  await click('play-action-grow');await tick(100);
+  assert.equal(await state('family.members[7].adult'),true);
+  await click('family-prev');
+  assert.equal(await page.locator('.family-pet').count(),6);
+  await click('family-next');
+  await page.screenshot({path:path.join(results,'playball-family.png')});
+  await state('saveCompanions()');
+  const familySaved=await state('JSON.parse(localStorage.getItem(COMPANION_SAVE_KEY)).world.family');
+  assert.equal(familySaved.members.length,8);
+  assert.equal(familySaved.members[7].adult,true);
+  await click('play-menu-close');
+  await state('restoreFamily(null,false);saveCompanions()');
+  pass('picture-only menu routes, three new games, mismatch/pause/replay, eight babies, growth and family pages');
   const settle = async () => {
     for (let i=0;i<52 && await state('feedings.size');i++) await tick(500);
     assert.equal(await state('feedings.size'),0,'feeding failed to settle');
@@ -320,7 +400,8 @@ let browser, page;
   await tick(19000);
   assert.equal(await state('memories.has("rest")'),true);
   await click("willow-ball");
-  await click("willow-ball");
+  assert.equal(await page.locator('#games-drawer').isVisible(),true);
+  await click('play-tab-care');await click('play-action-play-ball');
   assert.equal(await state('companionActions.size'),2);
   await tick(25000);
   assert.equal(await state('memories.has("ball")'),true);
@@ -430,7 +511,7 @@ let browser, page;
   assert.equal(await page.locator('#baby').isVisible(),true);
   await click('baby');
   await click('companion-menu');
-  assert.equal(await page.locator('#adopt-baby').isEnabled(),false);
+  assert.equal(await page.locator('#adopt-baby').isEnabled(),true);
   assert.equal(await page.locator('#baby').count(),1);
   await click('bedding-style');
   await click('move-tunnel');
@@ -544,6 +625,14 @@ let browser, page;
     assert.ok(closeBox.y + closeBox.height <= puzzleBox.y, 'Puzzle must not cover the close button');
     await page.locator('#tunnel-grid img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
     await page.screenshot({path:path.join(results,`tunnel-${size.width}x${size.height}.png`)});
+    await click('mini-close');
+    await click('games');
+    const menuBox=await page.locator('#games-drawer').boundingBox();
+    assert.ok(menuBox.x>=0 && menuBox.y>=0 && menuBox.x+menuBox.width<=size.width && menuBox.y+menuBox.height<=size.height);
+    if(size.width===360 || size.height===480) await page.screenshot({path:path.join(results,`playball-${size.width}x${size.height}.png`)});
+    await click('play-action-memory');
+    const extraBox=await page.locator('#extra-game').boundingBox();
+    assert.ok(extraBox.x>=0 && extraBox.y>=0 && extraBox.x+extraBox.width<=size.width && extraBox.y+extraBox.height<=size.height);
     await click('mini-close');
   }
   pass(

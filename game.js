@@ -211,6 +211,7 @@ $("#search").addEventListener("click", () => {
   react("🔎🥬");
 });
 function setPause(value) {
+  if (value) hideGames();
   if (value && typeof closeCompanionPanel === "function") closeCompanionPanel(false);
   paused = value;
   document.body.classList.toggle("paused", value);

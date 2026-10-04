@@ -15,13 +15,14 @@ function safeWorldNumber(value, fallback, min, max) {
 }
 
 function restoreWorld(saved) {
+  restoreFamily(saved?.family, saved?.baby === true);
   if (!saved || typeof saved !== "object") return;
   world.hay = safeWorldNumber(saved.hay, 100, 0, 100);
   world.cleaned = Math.floor(safeWorldNumber(saved.cleaned, 0, 0, 1000));
   world.bedding = Math.floor(safeWorldNumber(saved.bedding, 0, 0, 2));
   world.tunnelPlace = Math.floor(safeWorldNumber(saved.tunnelPlace, 0, 0, 1));
   world.minutes = safeWorldNumber(saved.minutes, world.minutes, 0, 1439);
-  world.baby = saved.baby === true;
+  world.baby = family.members.length > 0;
   if (Array.isArray(saved.dirt)) {
     for (const spot of saved.dirt.slice(0, 6)) {
       if (spot && Number.isFinite(spot.x) && Number.isFinite(spot.y))
@@ -34,6 +35,7 @@ function worldSnapshot() {
   return {
     hay: Math.round(world.hay), cleaned: world.cleaned, bedding: world.bedding,
     tunnelPlace: world.tunnelPlace, baby: world.baby, minutes: Math.floor(world.minutes),
+    family: familySnapshot(),
     dirt: [...world.dirt.values()].map(({ x, y }) => ({ x, y })),
   };
 }
@@ -60,10 +62,9 @@ function refreshWorldUi() {
   $("#hay-rack").setAttribute("aria-label", `Heu aus der Raufe fressen, ${Math.round(world.hay)} Prozent übrig`);
   $("#drink-bowl").setAttribute("aria-label", `An der Trinkflasche trinken, ${Math.round(water)} Prozent Wasser`);
   $("#baby").hidden = !world.baby;
-  $("#adopt-baby").disabled = world.baby || memories.size < 3;
-  $("#family-status").textContent = world.baby
-    ? "Fips ist da! Das Jungtier folgt August und Molly, imitiert sie und ruht mit ihnen. Seine Versorgung gehört zur gemeinsamen Pflege; es gibt keine weiteren Babys."
-    : "Nach drei Album-Stickern kann genau ein Jungtier einziehen: Fips. Keine Zucht, kein Zeitdruck.";
+  $("#adopt-baby").disabled = false;
+  $("#family-status").textContent = `${family.members.length} neue Familienfreunde. Im ⚽ unter 🐹 könnt ihr weitere Babys aufnehmen, auswählen und mit 🌱➡️🌼 groß werden lassen. Nach acht Spielminuten wachsen sie auch von selbst. Je sechs Freunde teilen sich eine Wiesenseite; alle bleiben gespeichert. Ihre Versorgung gehört zur gemeinsamen Pflege.`;
+  if (typeof refreshPlayMenu === "function") refreshPlayMenu();
   $("#habitat").dataset.bedding = String(world.bedding);
   const place = tunnelPlaces[world.tunnelPlace];
   $("#world-tunnel").style.left = place.x + "%";
@@ -101,7 +102,7 @@ function startRackMeal(ids) {
   for (const id of ids) {
     if (feedings.has(id)) continue;
     if (world.hay - hayReservations() < 8) {
-      cozyNotice("🌾 Die Heuraufe braucht Nachschub. Auffüllen geht im 📖.");
+      cozyNotice("🌾 Die Heuraufe braucht Nachschub. Im ⚽ → 🥕 → 🌾➕ auffüllen.");
       break;
     }
     startFeeding([id], "Heu");
@@ -301,30 +302,7 @@ function cleanEnclosure() {
 }
 
 function stepBaby(dt) {
-  if (!world.baby) return;
-  const el = $("#baby");
-  baby.clock += dt;
-  baby.hop = Math.max(0, baby.hop - dt);
-  if (baby.clock > 35) { baby.clock = 0; baby.parent = baby.parent === "august" ? "molly" : "august"; }
-  const parent = walkers[baby.parent];
-  const sleeping = ["house-sleep", "napping", "inside", "peeking"].includes(parent.mode);
-  const eating = feedings.get(baby.parent)?.phase === "eating";
-  const inHouse = ["house-sleep", "inside", "peeking"].includes(parent.mode);
-  const targetX = clamp(inHouse ? 46 : parent.x + (parent.x > 50 ? -17 : 17), 17, 83);
-  const targetY = clamp(inHouse ? 45 : parent.y + 7, 44, 80);
-  const dx = targetX - baby.x, dy = targetY - baby.y;
-  const distance = Math.hypot(dx, dy * 1.5);
-  const amount = Math.min(1, dt * 16 / Math.max(1, distance));
-  baby.x += dx * amount;
-  baby.y += dy * amount;
-  const moving = distance > 2;
-  baby.gait += dt * 11;
-  el.dataset.mode = moving ? "following" : sleeping ? "sleeping" : eating ? "nibbling" : baby.hop ? "hopping" : "sniffing";
-  el.style.left = baby.x + "%";
-  el.style.top = baby.y + "%";
-  el.style.setProperty("--baby-facing", dx >= 0 ? 1 : -1);
-  const f = Math.floor(baby.gait) % 8;
-  $("#baby .baby-walk").style.backgroundPosition = `${(f % 4) * 100 / 3}% ${f < 4 ? 0 : 100}%`;
+  stepFamily(dt);
 }
 
 function stepWorld(dt) {
@@ -370,6 +348,7 @@ function stepWorld(dt) {
 }
 
 restoreWorld(pendingWorldSave);
+initializeFamily();
 refreshWorldUi();
 saveCompanions();
 $("#hay-rack").addEventListener("click", () => startRackMeal([...selected]));
@@ -407,17 +386,5 @@ $("#bedding-style").addEventListener("click", () => {
   cozyNotice(["🌾 Warme Strohfarben", "🍃 Sanftes Wiesengrün", "🌸 Zartes Blütenrosa"][world.bedding]);
 });
 $("#adopt-baby").addEventListener("click", () => {
-  if (paused || world.baby || memories.size < 3) return;
-  world.baby = true;
-  rememberMoment("baby");
-  refreshWorldUi();
-  saveCompanions();
-  closeCompanionPanel();
-  cozyNotice("Willkommen, Fips! Unser kleiner Mitbewohner entdeckt das Gehege. 🐹");
-});
-$("#baby").addEventListener("click", () => {
-  if (paused || miniGame || !world.baby) return;
-  baby.hop = 3;
-  tone("curious");
-  cozyNotice(`Fips: klein, neugierig und immer ${pets[baby.parent].name} hinterher. 💛`);
+  adoptFamilyMember();
 });
