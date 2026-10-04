@@ -1085,6 +1085,7 @@ button:hover:not(:disabled) {
 #tunnel-buddy { width: 12%; }
 .in-tunnel-game .mini-controls { bottom: 15px; }
 .in-tunnel-game #mini-again { width: 44px; height: 44px; font-size: 28px; border-radius: 14px; }
+.in-tunnel-game #mini-close { width: 44px; height: 44px; font-size: 24px; }
 .in-tunnel-game #reaction { display: none; }
 @media (max-width: 700px) {
   #tunnel-puzzle { top: 150px; }
